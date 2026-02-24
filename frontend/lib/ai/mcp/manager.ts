@@ -73,11 +73,7 @@ function wrapSmitheryTransport(innerTransport: any) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async send(message: any) {
       // Track outgoing request IDs in order
-      if (
-        "id" in message &&
-        message.id !== undefined &&
-        "method" in message
-      ) {
+      if ("id" in message && message.id !== undefined && "method" in message) {
         pendingIds.push(message.id);
       }
       return innerTransport.send(message);
@@ -188,7 +184,13 @@ export class MCPManager {
 
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
           try {
-            return await originalExecute(params, options);
+            console.log(
+              `[MCP] ▶ Executing: ${fullToolName}`,
+              JSON.stringify(params)
+            );
+            const result = await originalExecute(params, options);
+            console.log(`[MCP] ✓ Done: ${fullToolName}`);
+            return result;
           } catch (error) {
             const failures = state.toolFailures.get(fullToolName) ?? 0;
 
@@ -217,7 +219,8 @@ export class MCPManager {
       return state.client;
     }
 
-    const transportType: TransportType = (config.transportType as TransportType) ?? "streamable";
+    const transportType: TransportType =
+      (config.transportType as TransportType) ?? "streamable";
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {

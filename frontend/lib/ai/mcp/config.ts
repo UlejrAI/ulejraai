@@ -13,6 +13,16 @@ export const mcpServers = {
     envKey: "COINMARKETCAP_API_KEY",
     transportType: "smithery",
   },
+  tavily: {
+    url:
+      process.env.TAVILY_MCP_URL ||
+      `https://mcp.tavily.com/mcp/?tavilyApiKey=${process.env.TAVILY_API_KEY}`,
+    transportType: "streamable",
+  },
+  coingecko: {
+    url: process.env.COINGECKO_MCP_URL || "https://mcp.api.coingecko.com/mcp",
+    transportType: "streamable",
+  },
 } as const satisfies Record<string, MCPServerConfig>;
 
 export type MCPServerName = keyof typeof mcpServers;
