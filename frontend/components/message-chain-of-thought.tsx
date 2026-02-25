@@ -177,23 +177,17 @@ export function MessageChainOfThought({
 }: MessageChainOfThoughtProps) {
   const reasoningParts =
     message.parts?.filter((part) => part.type === "reasoning") ?? [];
-  // const toolParts =
-  //   message.parts?.filter((part) => part.type.startsWith("tool-")) ?? [];
-
-  const BUILT_IN_TOOLS = [
-    "tool-getWeather",
-    "tool-createDocument",
-    "tool-createInvoice",
-    "tool-updateDocument",
-    "tool-requestSuggestions",
-  ];
-
   const toolParts =
-    message.parts?.filter(
-      (part) =>
-        part.type.startsWith("tool-") && BUILT_IN_TOOLS.includes(part.type)
-    ) ?? [];
-  if (toolParts.length === 0) {
+    message.parts?.filter((part) => part.type.startsWith("tool-")) ?? [];
+
+  const hasReasoning = reasoningParts.some(
+    (part) =>
+      part.text?.trim().length > 0 ||
+      ("state" in part && part.state === "streaming")
+  );
+  const hasTools = toolParts.length > 0;
+
+  if (!hasReasoning && !hasTools) {
     return null;
   }
 

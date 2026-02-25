@@ -4,19 +4,6 @@ import { WalletMinimalIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo, useCallback, useEffect, useState } from "react";
 import { useWindowSize } from "usehooks-ts";
-import { saveChatModelAsCookie } from "@/app/(chat)/actions";
-import {
-  ModelSelector,
-  ModelSelectorContent,
-  ModelSelectorEmpty,
-  ModelSelectorGroup,
-  ModelSelectorInput,
-  ModelSelectorItem,
-  ModelSelectorList,
-  ModelSelectorLogo,
-  ModelSelectorName,
-  ModelSelectorTrigger,
-} from "@/components/ai-elements/model-selector";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { toast } from "@/components/toast";
 import { Button } from "@/components/ui/button";
@@ -36,9 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { chatModels } from "@/lib/ai/models";
 import { useAuthStore } from "@/lib/stores/auth-store";
-import { cn } from "@/lib/utils";
 import { PlusIcon } from "./icons";
 import { useSidebar } from "./ui/sidebar";
 import type { VisibilityType } from "./visibility-selector";
@@ -63,14 +48,10 @@ function PureChatHeader({
   chatId: _chatId,
   selectedVisibilityType: _selectedVisibilityType,
   isReadonly: _isReadonly,
-  selectedModelId,
-  onModelChange,
 }: {
   chatId: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
-  selectedModelId: string;
-  onModelChange: (modelId: string) => void;
 }) {
   const router = useRouter();
   const { open } = useSidebar();
@@ -78,9 +59,6 @@ function PureChatHeader({
 
   const isWalletConnected = user?.type === "wallet" && !!token;
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
-  const selectedModel =
-    chatModels.find((m) => m.id === selectedModelId) ?? chatModels[0];
   const [companies, setCompanies] = useState<CompanyOption[]>([]);
   const [isCompaniesLoading, setIsCompaniesLoading] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -310,7 +288,7 @@ function PureChatHeader({
 
       {(!open || windowWidth < 768) && (
         <Button
-          className="order-2 h-8 px-2 md:order-1 md:h-fit md:px-2"
+          className="order-2 ml-auto h-8 px-2 md:order-1 md:ml-0 md:h-fit md:px-2"
           onClick={() => {
             router.push("/");
             router.refresh();
@@ -322,58 +300,13 @@ function PureChatHeader({
         </Button>
       )}
 
-      {/* MODEL SELECTOR */}
-      <ModelSelector
-        onOpenChange={setModelSelectorOpen}
-        open={modelSelectorOpen}
-      >
-        <ModelSelectorTrigger asChild>
-          <Button
-            className={cn(
-              "order-2 gap-2 px-3",
-              !open || windowWidth < 768 ? "" : "ml-auto"
-            )}
-            variant="ghost"
-          >
-            <ModelSelectorLogo provider={selectedModel.provider} />
-            <span className="hidden text-sm sm:inline">
-              {selectedModel.name}
-            </span>
-          </Button>
-        </ModelSelectorTrigger>
-        <ModelSelectorContent title="Select Model">
-          <ModelSelectorInput placeholder="Search models..." />
-          <ModelSelectorList>
-            <ModelSelectorEmpty>No models found.</ModelSelectorEmpty>
-            <ModelSelectorGroup heading="Models">
-              {chatModels.map((model) => (
-                <ModelSelectorItem
-                  key={model.id}
-                  onSelect={() => {
-                    onModelChange(model.id);
-                    setModelSelectorOpen(false);
-                    saveChatModelAsCookie(model.id);
-                  }}
-                  value={model.id}
-                >
-                  <div className="flex items-center gap-2">
-                    <ModelSelectorLogo provider={model.provider} />
-                    <div className="flex flex-col">
-                      <ModelSelectorName>{model.name}</ModelSelectorName>
-                      <span className="text-xs text-muted-foreground">
-                        {model.description}
-                      </span>
-                    </div>
-                  </div>
-                  {model.id === selectedModelId && (
-                    <span className="ml-auto text-xs text-primary">✓</span>
-                  )}
-                </ModelSelectorItem>
-              ))}
-            </ModelSelectorGroup>
-          </ModelSelectorList>
-        </ModelSelectorContent>
-      </ModelSelector>
+      {/* {!isReadonly && (
+        <VisibilitySelector
+          chatId={chatId}
+          className="order-1 md:order-2"
+          selectedVisibilityType={selectedVisibilityType}
+        />
+      )} */}
 
       <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
         {isWalletConnected ? (
@@ -486,7 +419,6 @@ export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
   return (
     prevProps.chatId === nextProps.chatId &&
     prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
-    prevProps.isReadonly === nextProps.isReadonly &&
-    prevProps.selectedModelId === nextProps.selectedModelId
+    prevProps.isReadonly === nextProps.isReadonly
   );
 });
