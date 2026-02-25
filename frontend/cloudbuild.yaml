@@ -4,7 +4,9 @@ steps:
       - 'build'
       - '-t'
       - 'europe-west1-docker.pkg.dev/ulejraai/cloud-run-source-deploy/ulejraai/frontend:$COMMIT_SHA'
-      - '.'
+      - '-f'
+      - 'frontend/Dockerfile'
+      - 'frontend'
 
 images:
   - 'europe-west1-docker.pkg.dev/ulejraai/cloud-run-source-deploy/ulejraai/frontend:$COMMIT_SHA'
