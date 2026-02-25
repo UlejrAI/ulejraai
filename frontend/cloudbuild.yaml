@@ -8,6 +8,7 @@ steps:
       - 'frontend/Dockerfile'
       - 'frontend'
 
+
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
