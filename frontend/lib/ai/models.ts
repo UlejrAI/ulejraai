@@ -15,7 +15,7 @@ export const chatModels: ChatModel[] = [
     description: "Most capable multimodal model with vision and tools",
   },
   {
-    id: "kimi-k2-turbo",
+    id: "kimi-k2-turbo-preview",
     name: "Kimi K2 Turbo",
     provider: "moonshotai",
     description: "Fast and affordable, great for everyday tasks",
