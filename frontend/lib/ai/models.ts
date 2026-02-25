@@ -7,11 +7,16 @@ export type ChatModel = {
   provider: string;
   description: string;
 };
-
 export const chatModels: ChatModel[] = [
   {
     id: "kimi-k2.5",
     name: "Kimi K2.5",
+    provider: "moonshotai",
+    description: "Most capable multimodal model with vision and tools",
+  },
+  {
+    id: "kimi-k2-turbo",
+    name: "Kimi K2 Turbo",
     provider: "moonshotai",
     description: "Fast and affordable, great for everyday tasks",
   },
