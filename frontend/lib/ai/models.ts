@@ -10,8 +10,8 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
-    id: "kimi-k2.5",
-    name: "Kimi K2.5",
+    id: "kimi-k2-turbo-preview",
+    name: "Kimi K2 Turbo",
     provider: "moonshotai",
     description: "Fast and affordable, great for everyday tasks",
   },
