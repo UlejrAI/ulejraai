@@ -1,5 +1,7 @@
 "use server";
 
+import { compare } from "bcrypt-ts";
+import { cookies } from "next/headers";
 import { z } from "zod";
 
 import { createUser, getUser } from "@/lib/db/queries";
@@ -8,6 +10,36 @@ const authFormSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
 });
+
+async function createSessionToken(
+  payload: Record<string, unknown>
+): Promise<string> {
+  const secret = process.env.AUTH_SECRET ?? "";
+  const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+  const body = btoa(JSON.stringify(payload));
+  const data = `${header}.${body}`;
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(data)
+  );
+
+  const sig = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+
+  return `${data}.${sig}`;
+}
 
 export type LoginActionState = {
   status: "idle" | "in_progress" | "success" | "failed" | "invalid_data";
@@ -25,9 +57,34 @@ export const login = async (
 
     const [user] = await getUser(validatedData.email);
 
-    if (!user) {
+    if (!user || !user.password) {
       return { status: "failed" };
     }
+
+    const passwordMatch = await compare(validatedData.password, user.password);
+
+    if (!passwordMatch) {
+      return { status: "failed" };
+    }
+
+    const token = await createSessionToken({
+      user_id: user.id,
+      email: user.email,
+      role: "user",
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
+    });
+
+    const cookieStore = await cookies();
+    const isDev = process.env.NODE_ENV === "development";
+
+    cookieStore.set("auth_token", token, {
+      httpOnly: true,
+      secure: !isDev,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
 
     return { status: "success" };
   } catch (error) {

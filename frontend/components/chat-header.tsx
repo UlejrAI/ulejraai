@@ -1,6 +1,8 @@
 "use client";
 
-import { WalletMinimalIcon } from "lucide-react";
+import { LogInIcon, WalletMinimalIcon } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo, useCallback, useEffect, useState } from "react";
 import { useWindowSize } from "usehooks-ts";
@@ -58,6 +60,7 @@ function PureChatHeader({
   const { user, token, setAuth } = useAuthStore();
 
   const isWalletConnected = user?.type === "wallet" && !!token;
+  const isLoggedIn = user?.type === "user";
   const [dialogOpen, setDialogOpen] = useState(false);
   const [companies, setCompanies] = useState<CompanyOption[]>([]);
   const [isCompaniesLoading, setIsCompaniesLoading] = useState(false);
@@ -308,109 +311,138 @@ function PureChatHeader({
         />
       )} */}
 
-      <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
-        {isWalletConnected ? (
-          <Button className="order-3 ml-auto rounded-full py-1.5" disabled>
-            <WalletMinimalIcon className="size-4" />
-            Connected
-          </Button>
-        ) : (
-          <DialogTrigger asChild>
-            <Button className="order-3 ml-auto rounded-full py-1.5">
-              <WalletMinimalIcon className="size-4" />
-              Connect Wallet
-            </Button>
-          </DialogTrigger>
-        )}
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Wallet Signup</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                onChange={(event) => setFullName(event.target.value)}
-                placeholder="Enter your full name"
-                value={fullName}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="organisation">Organisation</Label>
-              <Select onValueChange={setCompanyId} value={companyId}>
-                <SelectTrigger
-                  aria-label="Select organisation"
-                  disabled={isCompaniesLoading}
-                >
-                  <SelectValue placeholder="Select organisation" />
-                </SelectTrigger>
-                <SelectContent>
-                  {companies.length > 0 ? (
-                    companies.map((company) => (
-                      <SelectItem key={company.id} value={company.id}>
-                        {company.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem disabled value="__no-organisations">
-                      {isCompaniesLoading
-                        ? "Loading organisations..."
-                        : "No organisations available"}
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="accountNumber">Account Number</Label>
-              <Input
-                id="accountNumber"
-                onChange={(event) => setAccountNumber(event.target.value)}
-                placeholder="Enter account number"
-                value={accountNumber}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="nin">National Identification Number (NIN)</Label>
-              <Input
-                id="nin"
-                onChange={(event) => setNin(event.target.value)}
-                placeholder="Enter NIN"
-                value={nin}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="mobileNumber">Mobile Number</Label>
-              <Input
-                id="mobileNumber"
-                onChange={(event) => setMobileNumber(event.target.value)}
-                placeholder="Enter mobile number"
-                value={mobileNumber}
-              />
-            </div>
-            <Button
-              className="mt-2"
-              disabled={!requiredFieldsFilled || isSubmitting}
-              onClick={handleCreateAccount}
+      <div className="order-3 ml-auto flex items-center gap-2">
+        {isLoggedIn || isWalletConnected ? (
+          <div className="group relative">
+            <button
+              aria-label="User menu"
+              className="flex size-8 items-center justify-center rounded-full overflow-hidden ring-2 ring-border hover:ring-primary transition-all"
               type="button"
             >
-              {isSubmitting ? "Submitting..." : "Create Account"}
+              <Image
+                alt={user?.email ?? user?.fullName ?? "User"}
+                className="rounded-full"
+                height={32}
+                src={`https://avatar.vercel.sh/${user?.email ?? user?.fullName ?? "user"}`}
+                width={32}
+              />
+            </button>
+          </div>
+        ) : (
+          <Link href="/login">
+            <Button className="rounded-full py-1.5" variant="outline">
+              <LogInIcon className="size-4" />
+              Login
             </Button>
-            {walletError && (
+          </Link>
+        )}
+
+        <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
+          {isWalletConnected ? (
+            <Button className="rounded-full py-1.5" disabled>
+              <WalletMinimalIcon className="size-4" />
+              Connected
+            </Button>
+          ) : (
+            <DialogTrigger asChild>
+              <Button className="rounded-full py-1.5">
+                <WalletMinimalIcon className="size-4" />
+                Connect Wallet
+              </Button>
+            </DialogTrigger>
+          )}
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Wallet Signup</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  onChange={(event) => setFullName(event.target.value)}
+                  placeholder="Enter your full name"
+                  value={fullName}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="organisation">Organisation</Label>
+                <Select onValueChange={setCompanyId} value={companyId}>
+                  <SelectTrigger
+                    aria-label="Select organisation"
+                    disabled={isCompaniesLoading}
+                  >
+                    <SelectValue placeholder="Select organisation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {companies.length > 0 ? (
+                      companies.map((company) => (
+                        <SelectItem key={company.id} value={company.id}>
+                          {company.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem disabled value="__no-organisations">
+                        {isCompaniesLoading
+                          ? "Loading organisations..."
+                          : "No organisations available"}
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="accountNumber">Account Number</Label>
+                <Input
+                  id="accountNumber"
+                  onChange={(event) => setAccountNumber(event.target.value)}
+                  placeholder="Enter account number"
+                  value={accountNumber}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="nin">
+                  National Identification Number (NIN)
+                </Label>
+                <Input
+                  id="nin"
+                  onChange={(event) => setNin(event.target.value)}
+                  placeholder="Enter NIN"
+                  value={nin}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="mobileNumber">Mobile Number</Label>
+                <Input
+                  id="mobileNumber"
+                  onChange={(event) => setMobileNumber(event.target.value)}
+                  placeholder="Enter mobile number"
+                  value={mobileNumber}
+                />
+              </div>
               <Button
                 className="mt-2"
-                disabled={isRetryingWallet}
-                onClick={handleRetryWallet}
+                disabled={!requiredFieldsFilled || isSubmitting}
+                onClick={handleCreateAccount}
                 type="button"
-                variant="outline"
               >
-                {isRetryingWallet ? "Retrying..." : "Retry Wallet Creation"}
+                {isSubmitting ? "Submitting..." : "Create Account"}
               </Button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+              {walletError && (
+                <Button
+                  className="mt-2"
+                  disabled={isRetryingWallet}
+                  onClick={handleRetryWallet}
+                  type="button"
+                  variant="outline"
+                >
+                  {isRetryingWallet ? "Retrying..." : "Retry Wallet Creation"}
+                </Button>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </header>
   );
 }

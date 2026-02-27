@@ -7,10 +7,12 @@ import { useActionState, useEffect, useState } from "react";
 import { AuthForm } from "@/components/auth-form";
 import { SubmitButton } from "@/components/submit-button";
 import { toast } from "@/components/toast";
+import { useAuthStore } from "@/lib/stores/auth-store";
 import { type LoginActionState, login } from "../actions";
 
 export default function Page() {
   const router = useRouter();
+  const { setAuth } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [isSuccessful, setIsSuccessful] = useState(false);
@@ -35,9 +37,19 @@ export default function Page() {
       });
     } else if (state.status === "success") {
       setIsSuccessful(true);
-      router.refresh();
+      fetch("/api/auth/me")
+        .then((res) => res.json())
+        .then(({ user, token }) => {
+          if (user && token) {
+            setAuth(user, token);
+          }
+        })
+        .finally(() => {
+          router.push("/");
+          router.refresh();
+        });
     }
-  }, [state.status, router]);
+  }, [state.status, router, setAuth]);
 
   const handleSubmit = (formData: FormData) => {
     setEmail(formData.get("email") as string);

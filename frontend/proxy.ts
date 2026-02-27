@@ -20,6 +20,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (pathname.startsWith("/api/auth/me")) {
+    return NextResponse.next();
+  }
+
   const authUrl =
     process.env.NEXTAUTH_URL ||
     "https://ulejra-ai-frontend-384014006015.europe-west1.run.app";

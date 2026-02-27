@@ -21,10 +21,16 @@ import type { User } from "@/lib/types/auth";
 
 export function SidebarUserNav({ user }: { user: User | null | undefined }) {
   const router = useRouter();
-  const { clearAuth } = useAuthStore();
+  const { user: storeUser, clearAuth } = useAuthStore();
   const { setTheme, resolvedTheme } = useTheme();
 
-  const isGuest = user?.type === "guest";
+  // Client-side Zustand state takes precedence to avoid race condition
+  // where server still sees the old session after cookie deletion
+  const isGuest =
+    storeUser?.type === "guest" ||
+    !storeUser ||
+    user?.type === "guest" ||
+    !user;
 
   return (
     <SidebarMenu>
@@ -66,12 +72,13 @@ export function SidebarUserNav({ user }: { user: User | null | undefined }) {
             <DropdownMenuItem asChild data-testid="user-nav-item-auth">
               <button
                 className="w-full cursor-pointer"
-                onClick={() => {
+                onClick={async () => {
                   if (isGuest) {
                     router.push("/login");
                   } else {
+                    await fetch("/api/auth/cookie", { method: "DELETE" });
                     clearAuth();
-                    router.push("/");
+                    router.push("/login");
                     router.refresh();
                   }
                 }}

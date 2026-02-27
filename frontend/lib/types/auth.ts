@@ -1,4 +1,4 @@
-export type UserType = "guest" | "wallet";
+export type UserType = "guest" | "wallet" | "user";
 
 export interface User {
   id: string;

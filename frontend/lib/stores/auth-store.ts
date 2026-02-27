@@ -40,6 +40,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       clearAuth: () => {
+        fetch("/api/auth/cookie", { method: "DELETE" }).catch(() => undefined);
         if (typeof window !== "undefined") {
           localStorage.removeItem(AUTH_STORAGE_KEY);
           const guestId = getOrCreateGuestId();
