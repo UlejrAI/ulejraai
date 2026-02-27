@@ -1,0 +1,15 @@
+router:
+  # Which LLM to use for routing decisions
+  model: "kimi-k2-turbo-preview"
+  api_base: "https://api.moonshot.ai/v1"
+
+  # Max tokens for routing response (keep minimal — this is overhead)
+  max_tokens: 50
+  temperature: 0.0
+
+  # Cache TTL in seconds (identical queries reuse the same decision)
+  cache_ttl: 300
+
+serve:
+  host: "0.0.0.0"
+  port: 8001

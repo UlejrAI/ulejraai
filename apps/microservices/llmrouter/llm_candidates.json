@@ -1,0 +1,12 @@
+{
+  "strong": {
+    "model_id": "kimi-k2.5",
+    "description": "Complex financial analysis, multi-step reasoning, comparisons, forecasting, detailed reports",
+    "cost_per_1k_tokens": 0.014
+  },
+  "weak": {
+    "model_id": "kimi-k2-turbo-preview",
+    "description": "Simple lookups, greetings, price checks, balance queries, quick transactions, yes/no answers",
+    "cost_per_1k_tokens": 0.004
+  }
+}
