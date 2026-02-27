@@ -5,8 +5,8 @@ steps:
       - '-t'
       - 'europe-west1-docker.pkg.dev/ulejraai/cloud-run-source-deploy/ulejraai/frontend:$COMMIT_SHA'
       - '-f'
-      - 'Dockerfile'
-      - '.'
+      - 'apps/frontend/Dockerfile'
+      - 'apps/frontend'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
