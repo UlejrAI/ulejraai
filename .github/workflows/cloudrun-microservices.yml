@@ -136,6 +136,8 @@ jobs:
                   service: "${{ matrix.service_name }}"
                   region: "${{ env.REGION }}"
                   image: "${{ env.IMAGE_REPO }}/${{ matrix.service_name }}:${{ github.sha }}"
+                  secrets: |
+                      MOONSHOT_API_KEY=MOONSHOT_API_KEY:latest
 
             - name: "Show output"
               run: echo "${{ steps.deploy.outputs.url }}"
