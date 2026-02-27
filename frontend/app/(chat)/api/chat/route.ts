@@ -270,7 +270,7 @@ export async function POST(request: Request) {
         ];
 
         const result = streamText({
-          model: getLanguageModel(selectedChatModel),
+          model: await getLanguageModel(selectedChatModel, messageText),
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages: modelMessages,
           stopWhen: stepCountIs(15),

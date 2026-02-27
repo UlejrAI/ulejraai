@@ -312,30 +312,6 @@ function PureChatHeader({
       )} */}
 
       <div className="order-3 ml-auto flex items-center gap-2">
-        {isLoggedIn || isWalletConnected ? (
-          <div className="group relative">
-            <button
-              aria-label="User menu"
-              className="flex size-8 items-center justify-center rounded-full overflow-hidden ring-2 ring-border hover:ring-primary transition-all"
-              type="button"
-            >
-              <Image
-                alt={user?.email ?? user?.fullName ?? "User"}
-                className="rounded-full"
-                height={32}
-                src={`https://avatar.vercel.sh/${user?.email ?? user?.fullName ?? "user"}`}
-                width={32}
-              />
-            </button>
-          </div>
-        ) : (
-          <Link href="/login">
-            <Button className="rounded-full py-1.5" variant="outline">
-              <LogInIcon className="size-4" />
-              Login
-            </Button>
-          </Link>
-        )}
 
         <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
           {isWalletConnected ? (

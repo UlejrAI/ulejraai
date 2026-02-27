@@ -11,7 +11,8 @@ export const mcpServers = {
       process.env.COINMARKETCAP_MCP_URL ||
       "https://coinmarketcap-mcp--shinzo-labs.run.tools",
     envKey: "COINMARKETCAP_API_KEY",
-    transportType: "smithery",
+    transportType: "streamable",
+    authStyle: "bearer",
   },
   tavily: {
     url:

@@ -165,7 +165,7 @@ export function AppSidebar({ user }: { user: User | null | undefined }) {
             </Link>
           </div>
         </SidebarContent>
-        <SidebarFooter>{user && <SidebarUserNav user={user} />}</SidebarFooter>
+        <SidebarFooter><SidebarUserNav user={user} /></SidebarFooter>
       </Sidebar>
 
       <AlertDialog

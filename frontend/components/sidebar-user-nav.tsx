@@ -32,6 +32,24 @@ export function SidebarUserNav({ user }: { user: User | null | undefined }) {
     user?.type === "guest" ||
     !user;
 
+  if (isGuest) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            className="h-10 bg-primary text-primary-foreground hover:bg-primary/90 border border-border font-medium"
+            data-testid="user-nav-button"
+            onClick={() => router.push("/login")}
+          >
+            <span className="truncate" data-testid="user-email">
+              Login to your account
+            </span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -49,7 +67,7 @@ export function SidebarUserNav({ user }: { user: User | null | undefined }) {
                 width={24}
               />
               <span className="truncate" data-testid="user-email">
-                {isGuest ? "Guest" : (user?.fullName ?? user?.email ?? "User")}
+                {user?.fullName ?? user?.email ?? "User"}
               </span>
               <ChevronUp className="ml-auto" />
             </SidebarMenuButton>
@@ -73,18 +91,14 @@ export function SidebarUserNav({ user }: { user: User | null | undefined }) {
               <button
                 className="w-full cursor-pointer"
                 onClick={async () => {
-                  if (isGuest) {
-                    router.push("/login");
-                  } else {
-                    await fetch("/api/auth/cookie", { method: "DELETE" });
-                    clearAuth();
-                    router.push("/login");
-                    router.refresh();
-                  }
+                  await fetch("/api/auth/cookie", { method: "DELETE" });
+                  clearAuth();
+                  router.push("/login");
+                  router.refresh();
                 }}
                 type="button"
               >
-                {isGuest ? "Login to your account" : "Sign out"}
+                Sign out
               </button>
             </DropdownMenuItem>
           </DropdownMenuContent>

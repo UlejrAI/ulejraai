@@ -276,6 +276,8 @@ export class MCPManager {
           // Default: StreamableHTTP (e.g. for alphavantage)
           const configAny = config as Record<string, unknown>;
           const envKey = configAny.envKey as string | undefined;
+          const authStyle =
+            (configAny.authStyle as string | undefined) ?? "query";
           const apiKey = envKey ? process.env[envKey] : undefined;
 
           if (!apiKey && envKey) {
@@ -284,14 +286,29 @@ export class MCPManager {
             return null;
           }
 
-          const url = apiKey
-            ? config.url.includes("?")
-              ? `${config.url}&apikey=${apiKey}`
-              : `${config.url}?apikey=${apiKey}`
-            : config.url;
+          let url = config.url;
+          let requestInit: RequestInit | undefined;
 
-          console.log(`[MCP] ${name} - connecting to StreamableHTTP: ${url}`);
-          const transport = new StreamableHTTPClientTransport(new URL(url));
+          if (apiKey) {
+            if (authStyle === "bearer") {
+              // Pass API key as Authorization: Bearer header
+              requestInit = {
+                headers: { Authorization: `Bearer ${apiKey}` },
+              };
+            } else {
+              // Default: append as query parameter
+              const separator = config.url.includes("?") ? "&" : "?";
+              url = `${config.url}${separator}apikey=${apiKey}`;
+            }
+          }
+
+          console.log(
+            `[MCP] ${name} - connecting to StreamableHTTP: ${url} (auth: ${authStyle})`
+          );
+          const transport = new StreamableHTTPClientTransport(
+            new URL(url),
+            requestInit ? { requestInit } : undefined
+          );
           client = await createMCPClient({ transport });
         }
 

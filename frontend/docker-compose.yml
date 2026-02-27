@@ -17,10 +17,27 @@ services:
       - EXTERNAL_BACKEND_URL=https://api.saloneledger.com
       - MOONSHOT_API_KEY=${MOONSHOT_API_KEY}
       - ALPHAVANTAGE_API_KEY=${ALPHAVANTAGE_API_KEY}
+      - LLMROUTER_URL=http://llmrouter:8001
     depends_on:
       - db
       - redis
+      - llmrouter
     restart: always
+
+  llmrouter:
+    build:
+      context: ../apps/microservices/llmrouter
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - MOONSHOT_API_KEY=${MOONSHOT_API_KEY}
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   db:
     image: postgres:16-alpine

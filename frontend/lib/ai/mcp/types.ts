@@ -1,11 +1,13 @@
 import type { Tool } from "ai";
 
 export type TransportType = "streamable" | "smithery" | "sse";
+export type AuthStyle = "query" | "bearer";
 
 export interface MCPServerConfig {
   url: string;
   envKey?: string;
   transportType?: TransportType;
+  authStyle?: AuthStyle;
 }
 
 export interface MCPConnectionState {
