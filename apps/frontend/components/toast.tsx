@@ -16,6 +16,7 @@ export function toast(props: Omit<ToastProps, "id">) {
   ));
 }
 
+
 function Toast(props: ToastProps) {
   const { id, type, description } = props;
 
