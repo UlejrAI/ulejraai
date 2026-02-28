@@ -151,6 +151,7 @@ jobs:
                   service: "${{ matrix.service_name }}"
                   region: "${{ env.REGION }}"
                   image: "${{ env.IMAGE_REPO }}/${{ matrix.service_name }}:${{ github.sha }}"
+                  flags: "--allow-unauthenticated"
                   env_vars: |
                       AUTH_TRUST_HOST=true
                       EXTERNAL_BACKEND_URL=https://api.saloneledger.com
