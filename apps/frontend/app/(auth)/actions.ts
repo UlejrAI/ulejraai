@@ -123,6 +123,31 @@ export const register = async (
     }
     await createUser(validatedData.email, validatedData.password);
 
+    const [newUser] = await getUser(validatedData.email);
+
+    if (!newUser) {
+      return { status: "failed" };
+    }
+
+    const token = await createSessionToken({
+      user_id: newUser.id,
+      email: newUser.email,
+      role: "user",
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
+    });
+
+    const cookieStore = await cookies();
+    const isDev = process.env.NODE_ENV === "development";
+
+    cookieStore.set("auth_token", token, {
+      httpOnly: true,
+      secure: !isDev,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
+
     return { status: "success" };
   } catch (error) {
     if (error instanceof z.ZodError) {
