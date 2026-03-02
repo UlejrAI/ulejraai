@@ -14,10 +14,27 @@ from pathlib import Path
 
 import httpx
 import yaml
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
 app = FastAPI(title="LLMRouter", version="1.0.0")
+
+# ---------------------------------------------------------------------------
+# Optional API key auth (set LLMROUTER_API_KEY env var to enable)
+# ---------------------------------------------------------------------------
+
+LLMROUTER_API_KEY = os.environ.get("LLMROUTER_API_KEY", "")
+
+
+def _verify_api_key(authorization: str | None = Header(None)) -> None:
+    """If LLMROUTER_API_KEY is set, require Bearer <key> on every request."""
+    if not LLMROUTER_API_KEY:
+        return  # No key configured → allow all (Cloud Run IAM handles auth)
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    token = authorization.removeprefix("Bearer ").strip()
+    if token != LLMROUTER_API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API key")
 
 # ---------------------------------------------------------------------------
 # Load config
@@ -172,7 +189,8 @@ class RouteResponse(BaseModel):
 
 
 @app.post("/route", response_model=RouteResponse)
-async def route_query(req: RouteRequest):
+async def route_query(req: RouteRequest, authorization: str | None = Header(None)):
+    _verify_api_key(authorization)
     routed_to = await classify_query(req.query)
     candidate = candidates[routed_to]
 
