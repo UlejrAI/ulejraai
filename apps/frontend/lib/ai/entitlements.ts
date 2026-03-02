@@ -8,6 +8,9 @@ export const entitlementsByUserType: Record<UserType, Entitlements> = {
   guest: {
     maxMessagesPerDay: 100,
   },
+  user: {
+    maxMessagesPerDay: 100,
+  },
   wallet: {
     maxMessagesPerDay: 50,
   },

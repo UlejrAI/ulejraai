@@ -1,4 +1,4 @@
- # This workflow builds and pushes Docker containers to Google Artifact Registry
+# This workflow builds and pushes Docker containers to Google Artifact Registry
 # and deploys them on Cloud Run when commits are pushed to the "main" branch.
 # Only apps under apps/ that have a root Dockerfile and were changed are deployed.
 #
@@ -37,11 +37,11 @@ on:
             - "apps/**"
 
 env:
-    PROJECT_ID: "ulejraai" # TODO: update to your Google Cloud project ID
-    REGION: "europe-west1" # TODO: update to your region
+    PROJECT_ID: "ulejraai"
+    REGION: "europe-west1"
     IMAGE_REPO: "europe-west1-docker.pkg.dev/ulejraai/ulejraai"
     REGISTRY: "europe-west1-docker.pkg.dev"
-    WORKLOAD_IDENTITY_PROVIDER: "projects/481969206534/locations/global/workloadIdentityPools/github-action/providers/github-actions" # TODO: update to your workload identity provider
+    WORKLOAD_IDENTITY_PROVIDER: "projects/481969206534/locations/global/workloadIdentityPools/github-action/providers/github-actions"
 
 jobs:
     detect-changes:
@@ -54,43 +54,57 @@ jobs:
             - name: "Checkout"
               uses: "actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332" # actions/checkout@v4
               with:
-                  fetch-depth: 2
+                  fetch-depth: 0
 
             - id: "changes"
               name: "Detect changed apps with Dockerfile"
               run: |
                   if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ] || [ -z "${{ github.event.before }}" ]; then
                       CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff-tree --no-commit-id --name-only -r HEAD)
-                  else
+                  elif git cat-file -e "${{ github.event.before }}" 2>/dev/null; then
                       CHANGED=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}")
+                  else
+                      CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff-tree --no-commit-id --name-only -r HEAD)
                   fi
-                  APPS=()
+
+                  frontend_changed=false
+                  MICROSERVICE_APPS=()
+
                   while IFS= read -r path; do
                       [ -z "$path" ] && continue
-                      if [[ "$path" == apps/tenant-platform* ]]; then
-                          APPS+=("apps/tenant-platform")
+                      if [[ "$path" == apps/frontend/* ]]; then
+                          # Frontend is a single monolithic app — track as one unit
+                          frontend_changed=true
                       elif [[ "$path" == apps/microservices/* ]]; then
                           name="${path#apps/microservices/}"
                           name="${name%%/*}"
-                          APPS+=("apps/microservices/$name")
-                      elif [[ "$path" == apps/frontend/* ]]; then
-                          name="${path#apps/frontend/}"
-                          name="${name%%/*}"
-                          APPS+=("apps/frontend/$name")
+                          MICROSERVICE_APPS+=("apps/microservices/$name")
+                      elif [[ "$path" == apps/tenant-platform* ]]; then
+                          MICROSERVICE_APPS+=("apps/tenant-platform")
                       fi
                   done <<< "$CHANGED"
+
                   SERVICES='[]'
                   seen=""
-                  for app in $(printf '%s\n' "${APPS[@]}" | sort -u); do
+
+                  # Frontend: deploy as a single service named "frontend"
+                  if [ "$frontend_changed" = true ] && [ -f "apps/frontend/Dockerfile" ]; then
+                      SERVICES=$(echo "$SERVICES" | jq -c \
+                          '. + [{"app_path": "apps/frontend", "service_name": "frontend", "type": "frontend"}]')
+                  fi
+
+                  # Microservices: auto-detect by folder name
+                  for app in $(printf '%s\n' "${MICROSERVICE_APPS[@]}" | sort -u); do
                       if [ -f "$app/Dockerfile" ] && [[ ! "$seen" == *"|$app|"* ]]; then
                           seen="$seen|$app|"
                           service_name="${app##*/}"
                           SERVICES=$(echo "$SERVICES" | jq -c \
                               --arg path "$app" \
                               --arg name "$service_name" \
-                              '. + [{"app_path": $path, "service_name": $name}]')
+                              '. + [{"app_path": $path, "service_name": $name, "type": "microservice"}]')
                       fi
                   done
+
                   echo "services=$SERVICES" >> "$GITHUB_OUTPUT"
                   echo "Deployable services: $SERVICES"
 
@@ -165,4 +179,5 @@ jobs:
                       MOONSHOT_API_KEY=MOONSHOT_API_KEY:latest
 
             - name: "Show output"
-              run: echo "${{ steps.deploy.outputs.url }}"
+              run: |
+                  echo "${{ steps.deploy-frontend.outputs.url || steps.deploy-microservice.outputs.url }}"
