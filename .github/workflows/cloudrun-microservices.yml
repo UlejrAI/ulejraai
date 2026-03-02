@@ -105,6 +105,20 @@ jobs:
                       fi
                   done
 
+                  # openclaw-mission-control: backend and frontend live in subdirectories
+                  if echo "$CHANGED" | grep -q "^apps/microservices/openclaw-mission-control/"; then
+                      if [ -f "apps/microservices/openclaw-mission-control/backend/Dockerfile" ] && [[ ! "$seen" == *"|openclaw-backend|"* ]]; then
+                          seen="$seen|openclaw-backend|"
+                          SERVICES=$(echo "$SERVICES" | jq -c \
+                              '. + [{"app_path": "apps/microservices/openclaw-mission-control", "service_name": "openclaw-backend", "type": "openclaw-backend", "dockerfile": "backend/Dockerfile"}]')
+                      fi
+                      if [ -f "apps/microservices/openclaw-mission-control/frontend/Dockerfile" ] && [[ ! "$seen" == *"|openclaw-frontend|"* ]]; then
+                          seen="$seen|openclaw-frontend|"
+                          SERVICES=$(echo "$SERVICES" | jq -c \
+                              '. + [{"app_path": "apps/microservices/openclaw-mission-control/frontend", "service_name": "openclaw-frontend", "type": "openclaw-frontend", "dockerfile": ""}]')
+                      fi
+                  fi
+
                   echo "services=$SERVICES" >> "$GITHUB_OUTPUT"
                   echo "Deployable services: $SERVICES"
 
@@ -140,7 +154,27 @@ jobs:
             - name: "Build and Push Container"
               run: |
                   DOCKER_TAG="${{ env.IMAGE_REPO }}/${{ matrix.service_name }}:${{ github.sha }}"
-                  docker build --tag "${DOCKER_TAG}" "${{ matrix.app_path }}"
+                  APP_PATH="${{ matrix.app_path }}"
+                  DOCKERFILE="${{ matrix.dockerfile }}"
+
+                  if [ "${{ matrix.type }}" = "openclaw-backend" ]; then
+                      # Backend Dockerfile lives in backend/ but needs repo-root context
+                      docker build \
+                          --file "${APP_PATH}/${DOCKERFILE}" \
+                          --tag "${DOCKER_TAG}" \
+                          "${APP_PATH}"
+                  elif [ "${{ matrix.type }}" = "openclaw-frontend" ]; then
+                      # Frontend Dockerfile is in frontend/ dir, needs NEXT_PUBLIC_* at build time
+                      BACKEND_URL=$(gcloud secrets versions access latest --secret=OPENCLAW_BACKEND_URL --project=${{ env.PROJECT_ID }} 2>/dev/null || echo "https://openclaw-backend-481969206534.europe-west1.run.app")
+                      docker build \
+                          --build-arg NEXT_PUBLIC_API_URL="${BACKEND_URL}" \
+                          --build-arg NEXT_PUBLIC_AUTH_MODE=gcp \
+                          --tag "${DOCKER_TAG}" \
+                          "${APP_PATH}"
+                  else
+                      docker build --tag "${DOCKER_TAG}" "${APP_PATH}"
+                  fi
+
                   docker push "${DOCKER_TAG}"
 
             - id: "deploy-frontend"
@@ -181,6 +215,32 @@ jobs:
                       MOONSHOT_API_KEY=MOONSHOT_API_KEY:latest
                       LLMROUTER_API_KEY=LLMROUTER_API_KEY:latest
 
+            - id: "deploy-openclaw-backend"
+              name: "Deploy OpenClaw Backend to Cloud Run"
+              if: matrix.type == 'openclaw-backend'
+              uses: "google-github-actions/deploy-cloudrun@33553064113a37d688aa6937bacbdc481580be17" # google-github-actions/deploy-cloudrun@v2
+              with:
+                  service: "${{ matrix.service_name }}"
+                  region: "${{ env.REGION }}"
+                  image: "${{ env.IMAGE_REPO }}/${{ matrix.service_name }}:${{ github.sha }}"
+                  env_vars: |
+                      AUTH_MODE=gcp
+                      DB_AUTO_MIGRATE=true
+                  secrets: |
+                      DATABASE_URL=OPENCLAW_DATABASE_URL:latest
+                      LOCAL_AUTH_TOKEN=OPENCLAW_AUTH_TOKEN:latest
+                      REDIS_URL=OPENCLAW_REDIS_URL:latest
+
+            - id: "deploy-openclaw-frontend"
+              name: "Deploy OpenClaw Frontend to Cloud Run"
+              if: matrix.type == 'openclaw-frontend'
+              uses: "google-github-actions/deploy-cloudrun@33553064113a37d688aa6937bacbdc481580be17" # google-github-actions/deploy-cloudrun@v2
+              with:
+                  service: "${{ matrix.service_name }}"
+                  region: "${{ env.REGION }}"
+                  image: "${{ env.IMAGE_REPO }}/${{ matrix.service_name }}:${{ github.sha }}"
+                  flags: "--allow-unauthenticated"
+
             - name: "Show output"
               run: |
-                  echo "${{ steps.deploy-frontend.outputs.url || steps.deploy-microservice.outputs.url }}"
+                  echo "${{ steps.deploy-frontend.outputs.url || steps.deploy-microservice.outputs.url || steps.deploy-openclaw-backend.outputs.url || steps.deploy-openclaw-frontend.outputs.url }}"
