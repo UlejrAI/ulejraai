@@ -2,3 +2,4 @@ frontend/docs/mcp-nasil-calisir.md
 frontend/projdump.txt
 apps/frontend/projdump.txt
 backups/
+apps/microservices/fred-mcp/.env
