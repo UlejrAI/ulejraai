@@ -8,9 +8,10 @@
  *   Query → LLMRouter microservice (LLM classification + cache)
  *         → returns { model_id, routed_to }
  *
- *   Service-to-service auth: When running on Cloud Run, fetches a Google
- *   identity token from the metadata server and passes it as Bearer token.
- *   Locally (no metadata server), no auth header is added.
+ *   Auth (priority order):
+ *   1. LLMROUTER_API_KEY env var → sent as Bearer token (local dev & CI)
+ *   2. GCP metadata server → identity token (Cloud Run → Cloud Run)
+ *   3. No auth (localhost without key)
  *
  *   If microservice is down → defaults to strong model (safe fallback)
  */
@@ -20,6 +21,7 @@ export const WEAK_MODEL = "kimi-k2-turbo-preview";
 export const AUTO_ROUTER_MODEL = "auto";
 
 const LLMROUTER_URL = process.env.LLMROUTER_URL || "http://localhost:8001";
+const LLMROUTER_API_KEY = process.env.LLMROUTER_API_KEY || "";
 const ROUTE_TIMEOUT_MS = 3000;
 
 // ---------------------------------------------------------------------------
@@ -30,8 +32,13 @@ let _cachedToken: string | null = null;
 let _tokenExpiry = 0;
 const TOKEN_TTL_MS = 55 * 60 * 1000; // 55 minutes
 
-async function getIdentityToken(): Promise<string | null> {
-  // Skip when running locally (metadata server won't be available)
+async function getAuthToken(): Promise<string | null> {
+  // 1. Static API key (local dev / CI) — never expires
+  if (LLMROUTER_API_KEY) {
+    return LLMROUTER_API_KEY;
+  }
+
+  // 2. Skip GCP metadata when running locally without a key
   if (LLMROUTER_URL.startsWith("http://localhost")) {
     return null;
   }
@@ -89,7 +96,7 @@ export async function routeModel(prompt: string): Promise<RouteResult> {
       "Content-Type": "application/json",
     };
 
-    const token = await getIdentityToken();
+    const token = await getAuthToken();
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
