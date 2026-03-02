@@ -26,6 +26,8 @@ app = FastAPI(title="LLMRouter", version="1.0.0")
 LLMROUTER_API_KEY = os.environ.get("LLMROUTER_API_KEY", "")
 
 
+
+
 def _verify_api_key(authorization: str | None = Header(None)) -> None:
     """If LLMROUTER_API_KEY is set, require Bearer <key> on every request."""
     if not LLMROUTER_API_KEY:

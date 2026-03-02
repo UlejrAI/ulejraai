@@ -215,7 +215,12 @@ export async function POST(request: Request) {
     const messageText =
       typeof lastUserMessage?.content === "string"
         ? lastUserMessage.content
-        : "";
+        : Array.isArray(lastUserMessage?.content)
+          ? (lastUserMessage.content as Array<{ type: string; text?: string }>)
+              .filter((p) => p.type === "text")
+              .map((p) => p.text ?? "")
+              .join(" ")
+          : "";
 
     const activeToolNames = isReasoningModel
       ? []
