@@ -129,8 +129,33 @@ jobs:
                   docker build --tag "${DOCKER_TAG}" "${{ matrix.app_path }}"
                   docker push "${DOCKER_TAG}"
 
-            - id: "deploy"
-              name: "Deploy to Cloud Run"
+            - id: "deploy-frontend"
+              name: "Deploy Frontend to Cloud Run"
+              if: matrix.type == 'frontend'
+              uses: "google-github-actions/deploy-cloudrun@33553064113a37d688aa6937bacbdc481580be17" # google-github-actions/deploy-cloudrun@v2
+              with:
+                  service: "${{ matrix.service_name }}"
+                  region: "${{ env.REGION }}"
+                  image: "${{ env.IMAGE_REPO }}/${{ matrix.service_name }}:${{ github.sha }}"
+                  flags: "--allow-unauthenticated"
+                  env_vars: |
+                      AUTH_TRUST_HOST=true
+                      EXTERNAL_BACKEND_URL=https://api.saloneledger.com
+                      AGENT_DASHBOARD_URL=https://openclaw-frontend-481969206534.europe-west1.run.app
+                  secrets: |
+                      POSTGRES_URL=POSTGRES_URL:latest
+                      AUTH_SECRET=AUTH_SECRET:latest
+                      NEXTAUTH_SECRET=NEXTAUTH_SECRET:latest
+                      MOONSHOT_API_KEY=MOONSHOT_API_KEY:latest
+                      ALPHAVANTAGE_API_KEY=ALPHAVANTAGE_API_KEY:latest
+                      COINMARKETCAP_API_KEY=COINMARKETCAP_API_KEY:latest
+                      SMITHERY_API_KEY=SMITHERY_API_KEY:latest
+                      TAVILY_API_KEY=TAVILY_API_KEY:latest
+                      LLMROUTER_URL=LLMROUTER_URL:latest
+
+            - id: "deploy-microservice"
+              name: "Deploy Microservice to Cloud Run"
+              if: matrix.type == 'microservice'
               uses: "google-github-actions/deploy-cloudrun@33553064113a37d688aa6937bacbdc481580be17" # google-github-actions/deploy-cloudrun@v2
               with:
                   service: "${{ matrix.service_name }}"

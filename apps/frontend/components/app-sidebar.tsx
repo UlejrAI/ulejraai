@@ -3,6 +3,7 @@
 import {
   ArrowUpRight,
   BellDotIcon,
+  Bot,
   HomeIcon,
   Settings2Icon,
   SquareLibrary,
@@ -59,6 +60,11 @@ const data = {
       name: "Transaction history",
       url: "/transaction-history",
       icon: SquareLibrary,
+    },
+    {
+      name: "Financial Agent Dashboard",
+      url: "/agent-dashboard",
+      icon: Bot,
     },
     {
       name: "Notifications",
