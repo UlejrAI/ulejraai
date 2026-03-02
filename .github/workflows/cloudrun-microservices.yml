@@ -166,6 +166,7 @@ jobs:
                       SMITHERY_API_KEY=SMITHERY_API_KEY:latest
                       TAVILY_API_KEY=TAVILY_API_KEY:latest
                       LLMROUTER_URL=LLMROUTER_URL:latest
+                      LLMROUTER_API_KEY=LLMROUTER_API_KEY:latest
 
             - id: "deploy-microservice"
               name: "Deploy Microservice to Cloud Run"
@@ -177,6 +178,7 @@ jobs:
                   image: "${{ env.IMAGE_REPO }}/${{ matrix.service_name }}:${{ github.sha }}"
                   secrets: |
                       MOONSHOT_API_KEY=MOONSHOT_API_KEY:latest
+                      LLMROUTER_API_KEY=LLMROUTER_API_KEY:latest
 
             - name: "Show output"
               run: |
