@@ -98,10 +98,17 @@ jobs:
                       if [ -f "$app/Dockerfile" ] && [[ ! "$seen" == *"|$app|"* ]]; then
                           seen="$seen|$app|"
                           service_name="${app##*/}"
+                          # fred-mcp gets its own type so it can receive a dedicated secret
+                          if [ "$service_name" = "fred-mcp" ]; then
+                              svc_type="fred-mcp"
+                          else
+                              svc_type="microservice"
+                          fi
                           SERVICES=$(echo "$SERVICES" | jq -c \
                               --arg path "$app" \
                               --arg name "$service_name" \
-                              '. + [{"app_path": $path, "service_name": $name, "type": "microservice"}]')
+                              --arg type "$svc_type" \
+                              '. + [{"app_path": $path, "service_name": $name, "type": $type}]')
                       fi
                   done
 
@@ -201,6 +208,8 @@ jobs:
                       TAVILY_API_KEY=TAVILY_API_KEY:latest
                       LLMROUTER_URL=LLMROUTER_URL:latest
                       LLMROUTER_API_KEY=LLMROUTER_API_KEY:latest
+                      FRED_API_KEY=FRED_API_KEY:latest
+                      FRED_MCP_URL=FRED_MCP_URL:latest
 
             - id: "deploy-microservice"
               name: "Deploy Microservice to Cloud Run"
@@ -215,6 +224,18 @@ jobs:
                       MOONSHOT_API_KEY=MOONSHOT_API_KEY:latest
                       LLMROUTER_API_KEY=LLMROUTER_API_KEY:latest
 
+            - id: "deploy-fred-mcp"
+              name: "Deploy FRED MCP to Cloud Run"
+              if: matrix.type == 'fred-mcp'
+              uses: "google-github-actions/deploy-cloudrun@33553064113a37d688aa6937bacbdc481580be17" # google-github-actions/deploy-cloudrun@v2
+              with:
+                  service: "${{ matrix.service_name }}"
+                  region: "${{ env.REGION }}"
+                  image: "${{ env.IMAGE_REPO }}/${{ matrix.service_name }}:${{ github.sha }}"
+                  flags: "--allow-unauthenticated"
+                  secrets: |
+                      FRED_API_KEY=FRED_API_KEY:latest
+
             - id: "deploy-openclaw-backend"
               name: "Deploy OpenClaw Backend to Cloud Run"
               if: matrix.type == 'openclaw-backend'
@@ -224,12 +245,12 @@ jobs:
                   region: "${{ env.REGION }}"
                   image: "${{ env.IMAGE_REPO }}/${{ matrix.service_name }}:${{ github.sha }}"
                   env_vars: |
-                      AUTH_MODE=gcp
+                      AUTH_MODE=local
                       DB_AUTO_MIGRATE=true
                   secrets: |
                       DATABASE_URL=OPENCLAW_DATABASE_URL:latest
                       LOCAL_AUTH_TOKEN=OPENCLAW_AUTH_TOKEN:latest
-                      REDIS_URL=OPENCLAW_REDIS_URL:latest
+                      RQ_REDIS_URL=OPENCLAW_REDIS_URL:latest
 
             - id: "deploy-openclaw-frontend"
               name: "Deploy OpenClaw Frontend to Cloud Run"
@@ -243,4 +264,4 @@ jobs:
 
             - name: "Show output"
               run: |
-                  echo "${{ steps.deploy-frontend.outputs.url || steps.deploy-microservice.outputs.url || steps.deploy-openclaw-backend.outputs.url || steps.deploy-openclaw-frontend.outputs.url }}"
+                  echo "${{ steps.deploy-frontend.outputs.url || steps.deploy-microservice.outputs.url || steps.deploy-fred-mcp.outputs.url || steps.deploy-openclaw-backend.outputs.url || steps.deploy-openclaw-frontend.outputs.url }}"

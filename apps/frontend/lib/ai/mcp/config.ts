@@ -24,6 +24,11 @@ export const mcpServers = {
     url: process.env.COINGECKO_MCP_URL || "https://mcp.api.coingecko.com/mcp",
     transportType: "streamable",
   },
+  fred: {
+    url: process.env.FRED_MCP_URL || "http://localhost:8022/mcp",
+    envKey: "FRED_API_KEY",
+    transportType: "streamable",
+  },
 } as const satisfies Record<string, MCPServerConfig>;
 
 export type MCPServerName = keyof typeof mcpServers;
