@@ -8,6 +8,8 @@ This is a Next.js 16 AI chatbot application using React 19, TypeScript, Tailwind
 
 ## Build Commands
 
+
+
 ```bash
 # Development
 pnpm dev                    # Start dev server with turbo
