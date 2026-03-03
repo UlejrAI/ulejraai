@@ -82,6 +82,8 @@ const toolTypeLabels: Record<string, string> = {
 function formatToolLabel(toolType: string): string {
   if (toolTypeLabels[toolType]) return toolTypeLabels[toolType];
 
+  if (toolType === "tool-loadSkill") return "Load Skill";
+
   // Strip "tool-" prefix then prettify
   const name = toolType.replace(/^tool-/, "");
 
@@ -252,26 +254,13 @@ export function MessageChainOfThought({
   isLoading,
   message,
 }: MessageChainOfThoughtProps) {
-  const BUILT_IN_TOOLS = [
-    "tool-getWeather",
-    "tool-createDocument",
-    "tool-createInvoice",
-    "tool-updateDocument",
-    "tool-requestSuggestions",
-  ];
-
   const toolParts =
     message.parts?.filter(
-      (part) =>
-        part.type.startsWith("tool-") && !BUILT_IN_TOOLS.includes(part.type)
+      (part) => part.type.startsWith("tool-") || part.type === "dynamic-tool"
     ) ?? [];
 
-  const hasTextContent =
-    message.parts?.some(
-      (part) => part.type === "text" && (part as { text?: string }).text?.trim()
-    ) ?? false;
-
-  if (toolParts.length === 0 && (!isLoading || hasTextContent)) {
+  // Only hide entirely when done loading with no tool calls (pure text response)
+  if (toolParts.length === 0 && !isLoading) {
     return null;
   }
 
@@ -300,7 +289,7 @@ export function MessageChainOfThought({
     <ChainOfThought defaultOpen={true} isStreaming={isStreaming}>
       <ChainOfThoughtHeader />
       <ChainOfThoughtContent>
-        {toolParts.length === 0 && isLoading && !hasTextContent && (
+        {toolParts.length === 0 && isLoading && (
           <ChainOfThoughtStep
             description="Selecting relevant tools..."
             icon={Loader2Icon}
@@ -311,13 +300,34 @@ export function MessageChainOfThought({
         )}
         {toolParts.map((part, index) => {
           const toolPart = part as ToolUIPart;
-          const toolType = part.type;
+          const isDynamic = part.type === "dynamic-tool";
+          // dynamic-tool parts carry toolName on the object itself
+          const rawToolName: string = isDynamic
+            ? ((part as unknown as { toolName: string }).toolName ?? "unknown")
+            : part.type.replace(/^tool-/, "");
           const state = toolPart.state;
-          const toolCallId =
-            "toolCallId" in toolPart ? toolPart.toolCallId : `tool-${index}`;
+          const toolCallId: string =
+            (toolPart as unknown as { toolCallId?: string }).toolCallId ??
+            `tool-${index}`;
           const status = getStatusFromToolState(state);
           const Icon = getIconFromToolState(state);
-          const toolLabel = formatToolLabel(toolType);
+          const isLoadSkill = rawToolName === "loadSkill";
+          const skillName = isLoadSkill
+            ? (toolPart.input as { skillName?: string })?.skillName
+            : undefined;
+          const toolLabel = isLoadSkill && skillName
+            ? `Skill: ${skillName}`
+            : formatToolLabel(`tool-${rawToolName}`);
+
+          const loadSkillStatusLabels: Record<ToolUIPart["state"], string> = {
+            "input-streaming": "Loading...",
+            "input-available": `Loading ${skillName ?? "skill"}...`,
+            "approval-requested": "Awaiting approval",
+            "approval-responded": "Approved",
+            "output-available": `${skillName ?? "Skill"} loaded`,
+            "output-denied": "Denied",
+            "output-error": "Error",
+          };
 
           const statusLabels: Record<ToolUIPart["state"], string> = {
             "input-streaming": "Starting...",
@@ -329,9 +339,11 @@ export function MessageChainOfThought({
             "output-error": "Error",
           };
 
+          const activeStatusLabels = isLoadSkill ? loadSkillStatusLabels : statusLabels;
+
           return (
             <ChainOfThoughtStep
-              description={statusLabels[state]}
+              description={activeStatusLabels[state]}
               icon={Icon}
               key={toolCallId}
               label={toolLabel}
@@ -345,7 +357,7 @@ export function MessageChainOfThought({
             </ChainOfThoughtStep>
           );
         })}
-        {allToolsDone && isLoading && !hasTextContent && (
+        {allToolsDone && isLoading && (
           <ChainOfThoughtStep
             description="Processing results..."
             icon={Loader2Icon}
