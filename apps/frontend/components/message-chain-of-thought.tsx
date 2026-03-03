@@ -8,7 +8,6 @@ import {
   CheckCircleIcon,
   ClockIcon,
   Loader2Icon,
-  SearchIcon,
   XCircleIcon,
 } from "lucide-react";
 import {
@@ -32,6 +31,40 @@ const toolTypeLabels: Record<string, string> = {
   "tool-createInvoice": "Create Invoice",
   "tool-updateDocument": "Update Document",
   "tool-requestSuggestions": "Get Suggestions",
+  // Iroha tools
+  "tool-getBalance": "Get Balance",
+  "tool-getWalletInfo": "Get Wallet Info",
+  "tool-getNotifications": "Get Notifications",
+  "tool-markNotificationRead": "Mark Notification Read",
+  "tool-getTransferRequests": "Get Transfer Requests",
+  "tool-getRequestDetails": "Get Request Details",
+  "tool-getUserInfo": "Get User Info",
+  "tool-getContactInfo": "Get Contact Info",
+  "tool-updateContactInfo": "Update Contact Info",
+  "tool-getCompanies": "Get Companies",
+  "tool-transferFunds": "Transfer Funds",
+  "tool-exchangeAsset": "Exchange Asset",
+  "tool-setBalance": "Set Balance",
+  // AlphaVantage MCP
+  "tool-get_quote": "Stock Quote",
+  "tool-get_time_series_daily": "Daily Price History",
+  "tool-get_company_overview": "Company Overview",
+  "tool-get_income_statement": "Income Statement",
+  // CoinMarketCap MCP
+  "tool-getLatestListings": "Crypto Listings",
+  "tool-getQuotes": "Crypto Quotes",
+  // CoinGecko MCP
+  "tool-get_coin_price": "Coin Price",
+  "tool-get_trending_coins": "Trending Coins",
+  // Tavily MCP
+  "tool-tavily-search": "Web Search",
+  "tool-tavily_search": "Web Search",
+  // FRED MCP
+  "tool-search_series": "FRED: Search Series",
+  "tool-get_series_info": "FRED: Series Info",
+  "tool-get_observations": "FRED: Economic Data",
+  "tool-get_releases": "FRED: Releases",
+  "tool-get_release_series": "FRED: Release Series",
 };
 
 const getStatusFromToolState = (
@@ -175,11 +208,6 @@ export function MessageChainOfThought({
   isLoading,
   message,
 }: MessageChainOfThoughtProps) {
-  const reasoningParts =
-    message.parts?.filter((part) => part.type === "reasoning") ?? [];
-  // const toolParts =
-  //   message.parts?.filter((part) => part.type.startsWith("tool-")) ?? [];
-
   const BUILT_IN_TOOLS = [
     "tool-getWeather",
     "tool-createDocument",
@@ -191,7 +219,7 @@ export function MessageChainOfThought({
   const toolParts =
     message.parts?.filter(
       (part) =>
-        part.type.startsWith("tool-") && BUILT_IN_TOOLS.includes(part.type)
+        part.type.startsWith("tool-") && !BUILT_IN_TOOLS.includes(part.type)
     ) ?? [];
   if (toolParts.length === 0) {
     return null;
@@ -211,34 +239,6 @@ export function MessageChainOfThought({
     <ChainOfThought defaultOpen={true} isStreaming={isStreaming}>
       <ChainOfThoughtHeader />
       <ChainOfThoughtContent>
-        {reasoningParts.map((part, index) => {
-          const hasContent = part.text?.trim().length > 0;
-          const partStreaming = "state" in part && part.state === "streaming";
-          const status: "pending" | "active" | "complete" = partStreaming
-            ? "active"
-            : hasContent
-              ? "complete"
-              : "pending";
-
-          return (
-            <ChainOfThoughtStep
-              description={
-                hasContent ? `${part.text?.length ?? 0} characters` : undefined
-              }
-              icon={partStreaming ? Loader2Icon : SearchIcon}
-              key={`${message.id}-reasoning-${index}`}
-              label={partStreaming ? "Analyzing..." : "Reasoning"}
-              status={status}
-            >
-              {hasContent && (
-                <div className="rounded-md bg-muted/30 p-2 text-xs">
-                  {part.text}
-                </div>
-              )}
-            </ChainOfThoughtStep>
-          );
-        })}
-
         {toolParts.map((part, index) => {
           const toolPart = part as ToolUIPart;
           const toolType = part.type;
