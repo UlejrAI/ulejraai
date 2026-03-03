@@ -143,7 +143,8 @@ export class MCPManager {
               tool as unknown as Tool,
               serverName,
               toolName,
-              state
+              state,
+              config
             );
             allTools[fullToolName] = wrappedTool;
           }
@@ -166,11 +167,15 @@ export class MCPManager {
     tool: Tool,
     serverName: MCPServerName,
     toolName: string,
-    state: MCPConnectionState
+    state: MCPConnectionState,
+    config: (typeof mcpServers)[MCPServerName]
   ): Tool {
-    const originalExecute = tool.execute;
     const maxRetries = this.maxRetries;
     const delayFn = this.delay.bind(this);
+    const connectFn = this.connect.bind(this);
+
+    // Mutable reference so reconnect can swap in a fresh execute function
+    let currentExecute = tool.execute;
 
     return {
       ...tool,
@@ -178,7 +183,7 @@ export class MCPManager {
       execute: async (params: any, options?: any) => {
         const fullToolName = `${serverName}_${toolName}`;
 
-        if (typeof originalExecute !== "function") {
+        if (typeof currentExecute !== "function") {
           throw new Error(`Tool ${fullToolName} has no execute function`);
         }
 
@@ -188,15 +193,50 @@ export class MCPManager {
               `[MCP] ▶ Executing: ${fullToolName}`,
               JSON.stringify(params)
             );
-            const result = await originalExecute(params, options);
+            const result = await currentExecute(params, options);
             console.log(`[MCP] ✓ Done: ${fullToolName}`);
             return result;
           } catch (error) {
             const failures = state.toolFailures.get(fullToolName) ?? 0;
 
+            // Detect stale/broken transport — needs full reconnect
+            const isTransportError =
+              error instanceof Error &&
+              (error.message.includes("Already connected") ||
+                error.message.includes("transport") ||
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (error as any).code === 500);
+
             if (attempt < maxRetries) {
               state.toolFailures.set(fullToolName, failures + 1);
-              await delayFn(500 * (attempt + 1));
+
+              if (isTransportError) {
+                console.warn(
+                  `[MCP] ${fullToolName} transport error, closing and reconnecting...`
+                );
+                // Close stale client before reconnecting
+                try {
+                  await state.client?.close();
+                } catch {
+                  // ignore close errors
+                }
+                state.client = null;
+                await delayFn(500 * (attempt + 1));
+
+                // Reconnect and get a fresh execute function
+                const newClient = await connectFn(serverName, config, state);
+                if (newClient) {
+                  const freshTools = await newClient.tools();
+                  const freshTool = freshTools[toolName] as
+                    | Tool
+                    | undefined;
+                  if (freshTool?.execute) {
+                    currentExecute = freshTool.execute;
+                  }
+                }
+              } else {
+                await delayFn(500 * (attempt + 1));
+              }
             } else {
               console.error(
                 `Tool ${fullToolName} failed after ${maxRetries} retries:`,
@@ -294,6 +334,13 @@ export class MCPManager {
               // Pass API key as Authorization: Bearer header
               requestInit = {
                 headers: { Authorization: `Bearer ${apiKey}` },
+              };
+            } else if (authStyle === "x-header") {
+              // Pass API key as a custom header (e.g. X-CMC-MCP-API-KEY)
+              const headerName =
+                (configAny.headerName as string | undefined) ?? "X-Api-Key";
+              requestInit = {
+                headers: { [headerName]: apiKey },
               };
             } else {
               // Default: append as query parameter

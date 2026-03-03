@@ -1,13 +1,15 @@
 import type { Tool } from "ai";
 
 export type TransportType = "streamable" | "smithery" | "sse";
-export type AuthStyle = "query" | "bearer";
+export type AuthStyle = "query" | "bearer" | "x-header";
 
 export interface MCPServerConfig {
   url: string;
   envKey?: string;
   transportType?: TransportType;
   authStyle?: AuthStyle;
+  /** Header name to use when authStyle is "x-header" */
+  headerName?: string;
 }
 
 export interface MCPConnectionState {

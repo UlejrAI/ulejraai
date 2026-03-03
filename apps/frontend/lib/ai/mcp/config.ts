@@ -8,11 +8,11 @@ export const mcpServers = {
   },
   coinmarketcap: {
     url:
-      process.env.COINMARKETCAP_MCP_URL ||
-      "https://coinmarketcap-mcp--shinzo-labs.run.tools",
+      process.env.COINMARKETCAP_MCP_URL || "https://mcp.coinmarketcap.com/mcp",
     envKey: "COINMARKETCAP_API_KEY",
     transportType: "streamable",
-    authStyle: "bearer",
+    authStyle: "x-header",
+    headerName: "X-CMC-MCP-API-KEY",
   },
   tavily: {
     url:
