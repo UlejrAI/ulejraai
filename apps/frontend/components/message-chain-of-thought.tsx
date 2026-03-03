@@ -26,6 +26,7 @@ type MessageChainOfThoughtProps = {
 };
 
 const toolTypeLabels: Record<string, string> = {
+  // Built-in tools
   "tool-getWeather": "Get Weather",
   "tool-createDocument": "Create Document",
   "tool-createInvoice": "Create Invoice",
@@ -45,27 +46,69 @@ const toolTypeLabels: Record<string, string> = {
   "tool-transferFunds": "Transfer Funds",
   "tool-exchangeAsset": "Exchange Asset",
   "tool-setBalance": "Set Balance",
-  // AlphaVantage MCP
-  "tool-get_quote": "Stock Quote",
-  "tool-get_time_series_daily": "Daily Price History",
-  "tool-get_company_overview": "Company Overview",
-  "tool-get_income_statement": "Income Statement",
+  // AlphaVantage MCP (prefixed)
+  "tool-alphavantage_TOOL_LIST": "AlphaVantage: List Tools",
+  "tool-alphavantage_TOOL_GET": "AlphaVantage: Get Tool Info",
+  "tool-alphavantage_TOOL_CALL": "AlphaVantage: Fetch Data",
   // CoinMarketCap MCP
-  "tool-getLatestListings": "Crypto Listings",
-  "tool-getQuotes": "Crypto Quotes",
+  "tool-coinmarketcap_getLatestListings": "CoinMarketCap: Listings",
+  "tool-coinmarketcap_getQuotes": "CoinMarketCap: Quotes",
   // CoinGecko MCP
-  "tool-get_coin_price": "Coin Price",
-  "tool-get_trending_coins": "Trending Coins",
+  "tool-coingecko_get_simple_price": "CoinGecko: Price",
+  "tool-coingecko_get_coins_markets": "CoinGecko: Markets",
+  "tool-coingecko_get_search_trending": "CoinGecko: Trending",
+  "tool-coingecko_get_search": "CoinGecko: Search",
+  "tool-coingecko_get_global": "CoinGecko: Global Market",
+  "tool-coingecko_get_coins_top_gainers_losers": "CoinGecko: Top Gainers/Losers",
+  "tool-coingecko_get_coins_history": "CoinGecko: Price History",
+  "tool-coingecko_get_id_coins": "CoinGecko: Coin Info",
+  "tool-coingecko_get_id_exchanges": "CoinGecko: Exchange Info",
+  "tool-coingecko_get_id_nfts": "CoinGecko: NFT Info",
   // Tavily MCP
-  "tool-tavily-search": "Web Search",
-  "tool-tavily_search": "Web Search",
+  "tool-tavily_tavily_search": "Web Search",
+  "tool-tavily_tavily_extract": "Web Extract",
+  "tool-tavily_tavily_crawl": "Web Crawl",
+  "tool-tavily_tavily_map": "Web Map",
+  "tool-tavily_tavily_research": "Deep Research",
   // FRED MCP
-  "tool-search_series": "FRED: Search Series",
-  "tool-get_series_info": "FRED: Series Info",
-  "tool-get_observations": "FRED: Economic Data",
-  "tool-get_releases": "FRED: Releases",
-  "tool-get_release_series": "FRED: Release Series",
+  "tool-fred_search_series": "FRED: Search Series",
+  "tool-fred_get_series_info": "FRED: Series Info",
+  "tool-fred_get_observations": "FRED: Economic Data",
+  "tool-fred_get_releases": "FRED: Releases",
+  "tool-fred_get_release_series": "FRED: Release Series",
 };
+
+function formatToolLabel(toolType: string): string {
+  if (toolTypeLabels[toolType]) return toolTypeLabels[toolType];
+
+  // Strip "tool-" prefix then prettify
+  const name = toolType.replace(/^tool-/, "");
+
+  // Detect MCP prefix (e.g. "coingecko_get_simple_price" → "CoinGecko: Get Simple Price")
+  const mcpPrefixes: Record<string, string> = {
+    alphavantage: "AlphaVantage",
+    coinmarketcap: "CoinMarketCap",
+    coingecko: "CoinGecko",
+    tavily: "Tavily",
+    fred: "FRED",
+  };
+
+  for (const [prefix, label] of Object.entries(mcpPrefixes)) {
+    if (name.startsWith(`${prefix}_`)) {
+      const rest = name.slice(prefix.length + 1);
+      const readable = rest
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+      return `${label}: ${readable}`;
+    }
+  }
+
+  // Fallback: snake_case / camelCase → Title Case
+  return name
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 const getStatusFromToolState = (
   state: ToolUIPart["state"]
@@ -271,7 +314,7 @@ export function MessageChainOfThought({
             "toolCallId" in toolPart ? toolPart.toolCallId : `tool-${index}`;
           const status = getStatusFromToolState(state);
           const Icon = getIconFromToolState(state);
-          const toolLabel = toolTypeLabels[toolType] || toolType;
+          const toolLabel = formatToolLabel(toolType);
 
           const statusLabels: Record<ToolUIPart["state"], string> = {
             "input-streaming": "Starting...",

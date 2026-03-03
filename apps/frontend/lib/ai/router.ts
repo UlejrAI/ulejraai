@@ -22,7 +22,7 @@ export const AUTO_ROUTER_MODEL = "auto";
 
 const LLMROUTER_URL = process.env.LLMROUTER_URL || "http://localhost:8001";
 const LLMROUTER_API_KEY = process.env.LLMROUTER_API_KEY || "";
-const ROUTE_TIMEOUT_MS = 3000;
+const ROUTE_TIMEOUT_MS = 8000;
 
 // ---------------------------------------------------------------------------
 // GCP identity token cache (tokens are valid for ~1 hour, refresh at 55 min)
