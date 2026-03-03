@@ -292,7 +292,9 @@ const DocumentContent = ({ document }: { document: Document }) => {
       ) : document.kind === "invoice" ? (
         <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
           <FileIcon />
-          <p className="text-sm font-medium text-foreground">{document.title}</p>
+          <p className="text-sm font-medium text-foreground">
+            {document.title}
+          </p>
           <p className="text-xs text-muted-foreground">Click to view invoice</p>
         </div>
       ) : null}

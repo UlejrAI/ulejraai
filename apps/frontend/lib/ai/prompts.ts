@@ -1,5 +1,6 @@
 import type { Geo } from "@vercel/functions";
 import type { ArtifactKind } from "@/components/artifact";
+import { generativeUiPrompt } from "./generative-ui-prompt";
 
 export const artifactsPrompt = `
 Artifacts is a special user interface mode that helps users with writing, editing, and other content creation tasks. When artifact is open, it is on the right side of the screen, while the conversation is on the left side. When creating or updating documents, changes are reflected in real-time on the artifacts and visible to the user.
@@ -148,7 +149,7 @@ export const systemPrompt = ({
     return `${regularPrompt}\n\n${datePrompt}\n\n${requestPrompt}`;
   }
 
-  return `${regularPrompt}\n\n${datePrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}\n\n${invoicePrompt}`;
+  return `${regularPrompt}\n\n${datePrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}\n\n${invoicePrompt}\n\n${generativeUiPrompt}`;
 };
 
 export const codePrompt = `

@@ -37,9 +37,14 @@ export const createInvoice = ({ user, dataStream }: CreateInvoiceProps) =>
       items: z
         .array(
           z.object({
-            description: z.string().describe("Description of the service or product"),
+            description: z
+              .string()
+              .describe("Description of the service or product"),
             quantity: z.number().positive().describe("Quantity"),
-            unitPrice: z.number().positive().describe("Price per unit in the base currency"),
+            unitPrice: z
+              .number()
+              .positive()
+              .describe("Price per unit in the base currency"),
             currency: z
               .string()
               .default("USD")
@@ -133,7 +138,7 @@ export const createInvoice = ({ user, dataStream }: CreateInvoiceProps) =>
       const total = subtotal + (tax ?? 0);
 
       // Build crypto payment info
-      let cryptoPayment: InvoiceData["cryptoPayment"] = undefined;
+      let cryptoPayment: InvoiceData["cryptoPayment"];
       if (cryptoAsset && (cryptoAmount || exchangeRate)) {
         const resolvedCryptoAmount =
           cryptoAmount ?? (exchangeRate ? total / exchangeRate : 0);
@@ -144,7 +149,8 @@ export const createInvoice = ({ user, dataStream }: CreateInvoiceProps) =>
           asset: cryptoAsset.toUpperCase(),
           amount: Number.parseFloat(resolvedCryptoAmount.toFixed(8)),
           walletAddress:
-            paymentWalletAddress || "0x0000000000000000000000000000000000000000",
+            paymentWalletAddress ||
+            "0x0000000000000000000000000000000000000000",
           exchangeRate: resolvedExchangeRate,
           rateTimestamp: now.toISOString(),
         };

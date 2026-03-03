@@ -59,7 +59,8 @@ const toolTypeLabels: Record<string, string> = {
   "tool-coingecko_get_search_trending": "CoinGecko: Trending",
   "tool-coingecko_get_search": "CoinGecko: Search",
   "tool-coingecko_get_global": "CoinGecko: Global Market",
-  "tool-coingecko_get_coins_top_gainers_losers": "CoinGecko: Top Gainers/Losers",
+  "tool-coingecko_get_coins_top_gainers_losers":
+    "CoinGecko: Top Gainers/Losers",
   "tool-coingecko_get_coins_history": "CoinGecko: Price History",
   "tool-coingecko_get_id_coins": "CoinGecko: Coin Info",
   "tool-coingecko_get_id_exchanges": "CoinGecko: Exchange Info",
@@ -265,9 +266,10 @@ export function MessageChainOfThought({
         part.type.startsWith("tool-") && !BUILT_IN_TOOLS.includes(part.type)
     ) ?? [];
 
-  const hasTextContent = message.parts?.some(
-    (part) => part.type === "text" && (part as { text?: string }).text?.trim()
-  ) ?? false;
+  const hasTextContent =
+    message.parts?.some(
+      (part) => part.type === "text" && (part as { text?: string }).text?.trim()
+    ) ?? false;
 
   if (toolParts.length === 0 && (!isLoading || hasTextContent)) {
     return null;
@@ -307,7 +309,8 @@ export function MessageChainOfThought({
             status="active"
           />
         )}
-        {toolParts.map((part, index) => {          const toolPart = part as ToolUIPart;
+        {toolParts.map((part, index) => {
+          const toolPart = part as ToolUIPart;
           const toolType = part.type;
           const state = toolPart.state;
           const toolCallId =

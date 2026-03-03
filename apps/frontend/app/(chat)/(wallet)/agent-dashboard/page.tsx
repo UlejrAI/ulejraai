@@ -12,10 +12,10 @@ export default function AgentDashboardPage() {
   return (
     <div className="flex flex-1 rounded-[inherit]">
       <iframe
+        allow="clipboard-write"
         className="h-full w-full"
         src={DASHBOARD_URL}
         title="Financial Agent Dashboard"
-        allow="clipboard-write"
       />
     </div>
   );

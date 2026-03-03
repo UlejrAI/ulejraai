@@ -3,7 +3,6 @@
 import {
   CalendarIcon,
   CheckCircle2Icon,
-  CopyIcon,
   DownloadIcon,
   FileTextIcon,
   MailIcon,
@@ -11,7 +10,7 @@ import {
   SendIcon,
   WalletIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Artifact } from "@/components/create-artifact";
 import { DocumentSkeleton } from "@/components/document-skeleton";
@@ -179,9 +178,7 @@ function InvoiceContent({
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             From
           </p>
-          <p className="font-medium text-foreground">
-            {invoiceData.from.name}
-          </p>
+          <p className="font-medium text-foreground">{invoiceData.from.name}</p>
           {invoiceData.from.email && (
             <p className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
               <MailIcon className="h-3 w-3" />
@@ -328,9 +325,8 @@ function InvoiceContent({
                 </p>
               </div>
               <p className="mt-1 text-xs italic text-muted-foreground">
-                Rate as of{" "}
-                {formatDate(invoiceData.cryptoPayment.rateTimestamp)}. Actual
-                amount may vary.
+                Rate as of {formatDate(invoiceData.cryptoPayment.rateTimestamp)}
+                . Actual amount may vary.
               </p>
             </div>
           </div>

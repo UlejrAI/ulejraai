@@ -37,8 +37,11 @@ export async function getLanguageModel(modelId: string, prompt?: string) {
 
   // LLMRouter: async routing via microservice
   if (modelId === AUTO_ROUTER_MODEL) {
-    const { modelId: routedModelId, routedTo, source } =
-      await routeModel(prompt ?? "");
+    const {
+      modelId: routedModelId,
+      routedTo,
+      source,
+    } = await routeModel(prompt ?? "");
 
     if (process.env.NODE_ENV === "development") {
       console.log(

@@ -51,8 +51,7 @@ async function getAuthToken(): Promise<string | null> {
   try {
     // Extract base URL as the audience (e.g. https://llmrouter-xxx.run.app)
     const audience = new URL(LLMROUTER_URL).origin;
-    const metadataUrl =
-      `http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=${audience}`;
+    const metadataUrl = `http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=${audience}`;
 
     const res = await fetch(metadataUrl, {
       headers: { "Metadata-Flavor": "Google" },

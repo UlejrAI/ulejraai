@@ -1,8 +1,6 @@
 "use client";
 
-import { LogInIcon, WalletMinimalIcon } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
+import { WalletMinimalIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo, useCallback, useEffect, useState } from "react";
 import { useWindowSize } from "usehooks-ts";
@@ -312,7 +310,6 @@ function PureChatHeader({
       )} */}
 
       <div className="order-3 ml-auto flex items-center gap-2">
-
         <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
           {isWalletConnected ? (
             <Button className="rounded-full py-1.5" disabled>

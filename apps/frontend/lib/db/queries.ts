@@ -122,7 +122,6 @@ export async function ensureWalletUser(userId: string): Promise<void> {
     .where(eq(user.id, userId))
     .limit(1);
 
-
   if (existingUser.length === 0) {
     const walletEmail = `wallet-${userId.slice(0, 8)}@ulejra.ai`;
     const hashedPassword = generateHashedPassword(generateUUID());

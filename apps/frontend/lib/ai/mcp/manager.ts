@@ -227,9 +227,7 @@ export class MCPManager {
                 const newClient = await connectFn(serverName, config, state);
                 if (newClient) {
                   const freshTools = await newClient.tools();
-                  const freshTool = freshTools[toolName] as
-                    | Tool
-                    | undefined;
+                  const freshTool = freshTools[toolName] as Tool | undefined;
                   if (freshTool?.execute) {
                     currentExecute = freshTool.execute;
                   }

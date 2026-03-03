@@ -1,6 +1,7 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useState } from "react";
+import { GenerativeResponse, parseUIResponse } from "@/components/ai-ui";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
@@ -118,6 +119,11 @@ const PurePreviewMessage = ({
 
             if (type === "text") {
               if (mode === "view") {
+                const uiResponse =
+                  message.role === "assistant"
+                    ? parseUIResponse(part.text)
+                    : null;
+
                 return (
                   <div key={key}>
                     <MessageContent
@@ -134,7 +140,11 @@ const PurePreviewMessage = ({
                           : undefined
                       }
                     >
-                      <Response>{sanitizeText(part.text)}</Response>
+                      {uiResponse ? (
+                        <GenerativeResponse response={uiResponse} />
+                      ) : (
+                        <Response>{sanitizeText(part.text)}</Response>
+                      )}
                     </MessageContent>
                   </div>
                 );
