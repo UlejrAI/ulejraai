@@ -221,7 +221,12 @@ export function MessageChainOfThought({
       (part) =>
         part.type.startsWith("tool-") && !BUILT_IN_TOOLS.includes(part.type)
     ) ?? [];
-  if (toolParts.length === 0) {
+
+  const hasTextContent = message.parts?.some(
+    (part) => part.type === "text" && (part as { text?: string }).text?.trim()
+  ) ?? false;
+
+  if (toolParts.length === 0 && (!isLoading || hasTextContent)) {
     return null;
   }
 
@@ -235,12 +240,31 @@ export function MessageChainOfThought({
 
   const isStreaming = isLoading;
 
+  const allToolsDone =
+    toolParts.length > 0 &&
+    toolParts.every((p) => {
+      const state = (p as ToolUIPart).state;
+      return (
+        state === "output-available" ||
+        state === "output-denied" ||
+        state === "output-error"
+      );
+    });
+
   return (
     <ChainOfThought defaultOpen={true} isStreaming={isStreaming}>
       <ChainOfThoughtHeader />
       <ChainOfThoughtContent>
-        {toolParts.map((part, index) => {
-          const toolPart = part as ToolUIPart;
+        {toolParts.length === 0 && isLoading && !hasTextContent && (
+          <ChainOfThoughtStep
+            description="Selecting relevant tools..."
+            icon={Loader2Icon}
+            key="thinking-placeholder"
+            label="Preparing"
+            status="active"
+          />
+        )}
+        {toolParts.map((part, index) => {          const toolPart = part as ToolUIPart;
           const toolType = part.type;
           const state = toolPart.state;
           const toolCallId =
@@ -275,6 +299,15 @@ export function MessageChainOfThought({
             </ChainOfThoughtStep>
           );
         })}
+        {allToolsDone && isLoading && !hasTextContent && (
+          <ChainOfThoughtStep
+            description="Processing results..."
+            icon={Loader2Icon}
+            key="generating-response"
+            label="Generating response"
+            status="active"
+          />
+        )}
       </ChainOfThoughtContent>
     </ChainOfThought>
   );
