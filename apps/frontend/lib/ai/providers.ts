@@ -42,7 +42,7 @@ export async function getLanguageModel(modelId: string, prompt?: string) {
 
     if (process.env.NODE_ENV === "development") {
       console.log(
-        `[LLMRouter] "${prompt?.slice(0, 60)}..." → ${routedTo} (${routedModelId}) via ${source}`
+        `[LLMRouter] "${prompt && prompt.length > 60 ? prompt.slice(0, 60) + "..." : prompt}" → ${routedTo} (${routedModelId}) via ${source}`
       );
     }
 
