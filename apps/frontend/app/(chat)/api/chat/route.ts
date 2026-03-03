@@ -17,6 +17,7 @@ import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { createInvoice } from "@/lib/ai/tools/invoice";
+import { loadSkill } from "@/lib/ai/tools/load-skill";
 import {
   exchangeAsset,
   getBalance,
@@ -262,6 +263,7 @@ export async function POST(request: Request) {
 
         const mcpToolNames = Object.keys(mcpTools);
         const coreToolNames = [
+          "loadSkill",
           "getWeather",
           "createDocument",
           "createInvoice",
@@ -289,6 +291,7 @@ export async function POST(request: Request) {
             : undefined,
           tools: {
             ...mcpTools,
+            loadSkill,
             getWeather,
             createDocument: createDocument({ user, dataStream }),
             createInvoice: createInvoice({ user, dataStream }),

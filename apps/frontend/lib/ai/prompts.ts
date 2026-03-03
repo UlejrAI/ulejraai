@@ -1,42 +1,9 @@
 import type { Geo } from "@vercel/functions";
 import type { ArtifactKind } from "@/components/artifact";
-import { generativeUiPrompt } from "./generative-ui-prompt";
-
-export const artifactsPrompt = `
-Artifacts is a special user interface mode that helps users with writing, editing, and other content creation tasks. When artifact is open, it is on the right side of the screen, while the conversation is on the left side. When creating or updating documents, changes are reflected in real-time on the artifacts and visible to the user.
-
-When asked to write code, always use artifacts. When writing code, specify the language in the backticks, e.g. \`\`\`python\`code here\`\`\`. The default language is Python. Other languages are not yet supported, so let the user know if they request a different language.
-
-DO NOT UPDATE DOCUMENTS IMMEDIATELY AFTER CREATING THEM. WAIT FOR USER FEEDBACK OR REQUEST TO UPDATE IT.
-
-This is a guide for using artifacts tools: \`createDocument\` and \`updateDocument\`, which render content on a artifacts beside the conversation.
-
-**When to use \`createDocument\`:**
-- For substantial content (>10 lines) or code
-- For content users will likely save/reuse (emails, code, essays, etc.)
-- When explicitly requested to create a document
-- For when content contains a single code snippet
-
-**When NOT to use \`createDocument\`:**
-- For informational/explanatory content
-- For conversational responses
-- When asked to keep it in chat
-
-**Using \`updateDocument\`:**
-- Default to full document rewrites for major changes
-- Use targeted updates only for specific, isolated changes
-- Follow user instructions for which parts to modify
-
-**When NOT to use \`updateDocument\`:**
-- Immediately after creating a document
-
-Do not update document right after creating it. Wait for user feedback or request to update it.
-
-**Using \`requestSuggestions\`:**
-- ONLY use when the user explicitly asks for suggestions on an existing document
-- Requires a valid document ID from a previously created document
-- Never use for general questions or information requests
-`;
+import {
+  buildAlwaysOnPrompt,
+  buildSkillCatalog,
+} from "@/lib/ai/skills/registry";
 
 export const regularPrompt = `You are a financial AI assistant with web research capabilities.
 
@@ -95,26 +62,6 @@ Do not invent facts, numbers, or sources.
 - Never say things like "API limit reached", "technical error", "tool unavailable", or "let me try another approach"
 - The user should never know which tools you are using or whether they succeeded or failed`;
 
-export const invoicePrompt = `
-## Invoice Generation
-
-You can create professional invoices using the \`createInvoice\` tool. Invoices are rendered as interactive artifacts.
-
-**Workflow for crypto invoices:**
-1. FIRST fetch the current crypto price using the appropriate MCP tool (coinmarketcap for crypto)
-2. THEN call \`createInvoice\` with the fetched exchange rate
-
-**Workflow for fiat-only invoices:**
-1. Call \`createInvoice\` directly with the fiat amounts
-
-**Important:**
-- Always extract the client name, service description, amounts, and currency from the user's message
-- For crypto invoices, you MUST fetch the live price before creating the invoice
-- Use reasonable defaults: 30-day payment terms, USD as base currency
-- If the user specifies a crypto amount (e.g., "0.25 ETH"), calculate the fiat equivalent using the fetched rate
-- If the user specifies a fiat amount with crypto payment, calculate the crypto amount using the fetched rate
-`;
-
 export type RequestHints = {
   latitude: Geo["latitude"];
   longitude: Geo["longitude"];
@@ -149,7 +96,10 @@ export const systemPrompt = ({
     return `${regularPrompt}\n\n${datePrompt}\n\n${requestPrompt}`;
   }
 
-  return `${regularPrompt}\n\n${datePrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}\n\n${invoicePrompt}\n\n${generativeUiPrompt}`;
+  const alwaysOn = buildAlwaysOnPrompt();
+  const skillCatalog = buildSkillCatalog();
+
+  return `${regularPrompt}\n\n${datePrompt}\n\n${requestPrompt}\n\n${alwaysOn}\n\n${skillCatalog}`;
 };
 
 export const codePrompt = `

@@ -105,54 +105,41 @@ pnpm db:studio    # Open Drizzle Studio
 
 ## Adding AI Skills
 
-The platform supports AI skills that enhance model responses. Skills are defined in `.skills/` directory.
+The platform uses a lazy-loading skill registry. Skills are defined in a single file — no separate prompt files or imports needed.
 
 ### How to Add a New Skill
 
-1. **Create skill directory**
-   ```bash
-   mkdir -p .skills/<skill-name>
-   ```
+Add an entry to `apps/frontend/lib/ai/skills/registry.ts`:
 
-2. **Create SKILL.md file** in the new directory:
-   ```markdown
-   ---
-   name: <skill-name>
-   description: What the skill does
-   ---
-   
-   # Skill Name
-   
-   ## When to use this skill
-   Describe when to activate this skill.
-   
-   ## Instructions
-   Detailed instructions for the model...
-   ```
+```typescript
+"my-skill": {
+    name: "my-skill",
+    description: "One-line description shown in the skill catalog (used by the model to decide when to load it).",
+    content: `## My Skill
 
-3. **Integrate with system prompt** in `apps/frontend/lib/ai/prompts.ts`:
-   ```typescript
-   import { <skill-name>Prompt } from "./<skill-name>-prompt";
-   
-   // Add to systemPrompt function:
-   return `${regularPrompt}\n\n${datePrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}\n\n${invoicePrompt}\n\n${generativeUiPrompt}\n\n${<skill-name>Prompt}`;
-   ```
+Full instructions for the model go here...`,
+    // alwaysOn: true,  // Only set this if the skill is needed on EVERY request
+},
+```
 
-4. **Create prompt file** at `apps/frontend/lib/ai/<skill-name>-prompt.ts`:
-   ```typescript
-   export const <skill-name>Prompt = `
-   ## Skill Name
-   Instructions for the model...
-   `;
-   ```
+That's it. The skill is automatically registered and available.
+
+### `alwaysOn` Flag
+
+| Value | Behavior |
+| --- | --- |
+| `true` | Full content included in system prompt on every request (e.g. artifacts, generative-ui) |
+| `false` / omitted | Only name + description shown in catalog; model calls `loadSkill` tool when needed |
+
+Use `alwaysOn: true` only for skills the model needs constantly. Everything else should be lazy-loaded.
 
 ### Skill File Locations
 
 | File | Purpose |
-|------|---------|
-| `.skills/generative-ui/SKILL.md` | Skill definition |
-| `lib/ai/generative-ui-prompt.ts` | System prompt integration |
-| `lib/ai/prompts.ts` | Main prompt assembly |
+| --- | --- |
+| `apps/frontend/lib/ai/skills/registry.ts` | Single source of truth for all skills |
+| `apps/frontend/lib/ai/tools/load-skill.ts` | Tool the model calls to load a skill at runtime |
+| `apps/frontend/lib/ai/prompts.ts` | Builds system prompt using `buildAlwaysOnPrompt()` + `buildSkillCatalog()` |
 
 ---
 
