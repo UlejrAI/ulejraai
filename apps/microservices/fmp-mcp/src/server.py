@@ -235,12 +235,26 @@ if __name__ == "__main__":
             app = _make_health_app(mcp.sse_app())
 
         uvicorn.run(app, host=args.host, port=args.port)
-
+        
+        
     elif args.streamable_http:
         import uvicorn
         from starlette.responses import JSONResponse
         from starlette.types import ASGIApp, Receive, Scope, Send
-        from mcp.server.transport_security import TransportSecuritySettings
+
+        # Monkey-patch: disable DNS rebinding protection
+        from mcp.server import transport_security
+        original_validate = transport_security.TransportSecurityMiddleware.validate_request
+
+        async def patched_validate(self, request, is_post=False):
+            if is_post:
+                content_type = request.headers.get("content-type")
+                if not self._validate_content_type(content_type):
+                    from starlette.responses import Response
+                    return Response("Invalid Content-Type header", status_code=400)
+            return None  # Skip all host/origin validation
+
+        transport_security.TransportSecurityMiddleware.validate_request = patched_validate
 
         mode = ("stateless" if args.stateless else "stateful") + (
             " JSON" if args.json_response else " SSE"
@@ -251,14 +265,7 @@ if __name__ == "__main__":
         print(f"API Key configured: {api_status}")
         print(f"Endpoint: http://{args.host}:{args.port}/mcp/")
 
-        # Disable DNS rebinding protection (Cloud Run handles security)
-        security_settings = TransportSecuritySettings(
-            enable_dns_rebinding_protection=False
-        )
-
-        mcp_app = mcp.streamable_http_app(
-            transport_security=security_settings
-        )
+        mcp_app = mcp.streamable_http_app()
 
         class HealthWrapper:
             """Add /health endpoint without breaking MCP lifespan."""
@@ -274,6 +281,7 @@ if __name__ == "__main__":
 
         app = HealthWrapper(mcp_app)
         uvicorn.run(app, host=args.host, port=args.port)
+
 
     else:
         mcp.run()
