@@ -248,7 +248,6 @@ jobs:
                   env_vars: |
                       TRANSPORT=streamable-http
                       STATELESS=true
-                      PORT=8000
                   secrets: |
                       FMP_API_KEY=FMP_API_KEY:latest
 
