@@ -215,6 +215,9 @@ def _make_health_app(base_app):
 # ---------------------------------------------------------------------------
 # 7. Run
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# 7. Run
+# ---------------------------------------------------------------------------
 if __name__ == "__main__":
     api_status = "Yes" if os.environ.get("FMP_API_KEY") else "No - using demo mode"
 
@@ -235,9 +238,9 @@ if __name__ == "__main__":
 
     elif args.streamable_http:
         import uvicorn
-        import inspect
         from starlette.responses import JSONResponse
         from starlette.types import ASGIApp, Receive, Scope, Send
+        from mcp.server.transport_security import TransportSecuritySettings
 
         mode = ("stateless" if args.stateless else "stateful") + (
             " JSON" if args.json_response else " SSE"
@@ -248,14 +251,17 @@ if __name__ == "__main__":
         print(f"API Key configured: {api_status}")
         print(f"Endpoint: http://{args.host}:{args.port}/mcp/")
 
-        sig = inspect.signature(mcp.streamable_http_app)
-        if "host_allowlist" in sig.parameters:
-            mcp_app = mcp.streamable_http_app(host_allowlist=["*"])
-        else:
-            mcp_app = mcp.streamable_http_app()
+        # Disable DNS rebinding protection (Cloud Run handles security)
+        security_settings = TransportSecuritySettings(
+            enable_dns_rebinding_protection=False
+        )
 
-        class HostRewriteWithHealth:
-            """Wraps MCP app: rewrites Host header + handles /health."""
+        mcp_app = mcp.streamable_http_app(
+            transport_security=security_settings
+        )
+
+        class HealthWrapper:
+            """Add /health endpoint without breaking MCP lifespan."""
             def __init__(self, app: ASGIApp):
                 self.app = app
 
@@ -264,20 +270,9 @@ if __name__ == "__main__":
                     response = JSONResponse({"status": "healthy", "service": "fmp-mcp-server"})
                     await response(scope, receive, send)
                     return
-
-                if scope["type"] in ("http", "websocket"):
-                    new_headers = []
-                    for key, value in scope.get("headers", []):
-                        if key == b"host":
-                            new_headers.append((b"host", b"localhost"))
-                        else:
-                            new_headers.append((key, value))
-                    scope = dict(scope)
-                    scope["headers"] = new_headers
-
                 await self.app(scope, receive, send)
 
-        app = HostRewriteWithHealth(mcp_app)
+        app = HealthWrapper(mcp_app)
         uvicorn.run(app, host=args.host, port=args.port)
 
     else:
