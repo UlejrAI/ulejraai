@@ -299,16 +299,17 @@ export function GenerativeResponse({
         const key = `comp-${index}`;
         switch (component.component) {
           case "card":
-            return <UICard key={key} {...(component.props as UICardProps)} />;
+            return <UICard key={key} {...(component.props as unknown as UICardProps)} />;
           case "table":
-            return <UITable key={key} {...(component.props as UITableProps)} />;
+            return <UITable key={key} {...(component.props as unknown as UITableProps)} />;
           case "chart":
-            return <UIChart key={key} {...(component.props as UIChartProps)} />;
+            return <UIChart key={key} {...(component.props as unknown as UIChartProps)} />;
           case "list":
-            return <UIList key={key} {...(component.props as UIListProps)} />;
+            return <UIList key={key} {...(component.props as unknown as UIListProps)} />;
           default:
             return null;
         }
+
       })}
     </div>
   );
