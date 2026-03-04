@@ -236,8 +236,6 @@ if __name__ == "__main__":
     elif args.streamable_http:
         import uvicorn
         import inspect
-        from starlette.applications import Starlette
-        from starlette.routing import Route, Mount
         from starlette.responses import JSONResponse
         from starlette.types import ASGIApp, Receive, Scope, Send
 
@@ -250,40 +248,36 @@ if __name__ == "__main__":
         print(f"API Key configured: {api_status}")
         print(f"Endpoint: http://{args.host}:{args.port}/mcp/")
 
-        async def health_check(request):
-            return JSONResponse({"status": "healthy", "service": "fmp-mcp-server"})
-
         sig = inspect.signature(mcp.streamable_http_app)
         if "host_allowlist" in sig.parameters:
-            app = mcp.streamable_http_app(host_allowlist=["*"])
-            app.router.routes.insert(0, Route("/health", health_check, methods=["GET"]))
+            mcp_app = mcp.streamable_http_app(host_allowlist=["*"])
         else:
             mcp_app = mcp.streamable_http_app()
 
-            class HostRewriteMiddleware:
-                """Rewrite Host header to localhost to bypass MCP transport security."""
-                def __init__(self, app: ASGIApp):
-                    self.app = app
+        class HostRewriteWithHealth:
+            """Wraps MCP app: rewrites Host header + handles /health."""
+            def __init__(self, app: ASGIApp):
+                self.app = app
 
-                async def __call__(self, scope: Scope, receive: Receive, send: Send):
-                    if scope["type"] in ("http", "websocket"):
-                        new_headers = []
-                        for key, value in scope.get("headers", []):
-                            if key == b"host":
-                                new_headers.append((b"host", b"localhost"))
-                            else:
-                                new_headers.append((key, value))
-                        scope = dict(scope)
-                        scope["headers"] = new_headers
-                    await self.app(scope, receive, send)
+            async def __call__(self, scope: Scope, receive: Receive, send: Send):
+                if scope["type"] == "http" and scope.get("path") == "/health":
+                    response = JSONResponse({"status": "healthy", "service": "fmp-mcp-server"})
+                    await response(scope, receive, send)
+                    return
 
-            app = Starlette(
-                routes=[
-                    Route("/health", health_check, methods=["GET"]),
-                    Mount("/", app=HostRewriteMiddleware(mcp_app)),
-                ],
-            )
+                if scope["type"] in ("http", "websocket"):
+                    new_headers = []
+                    for key, value in scope.get("headers", []):
+                        if key == b"host":
+                            new_headers.append((b"host", b"localhost"))
+                        else:
+                            new_headers.append((key, value))
+                    scope = dict(scope)
+                    scope["headers"] = new_headers
 
+                await self.app(scope, receive, send)
+
+        app = HostRewriteWithHealth(mcp_app)
         uvicorn.run(app, host=args.host, port=args.port)
 
     else:
