@@ -11,16 +11,17 @@
 import { artifactsContent } from "./content/artifacts";
 import { competitiveAnalysisContent } from "./content/competitive-analysis";
 import { compsAnalysisContent } from "./content/comps-analysis";
+import { dcfValuationContent } from "./content/dcf-valuation";
 import { earningsAnalysisContent } from "./content/earnings-analysis";
 import { economicBriefContent } from "./content/economic-brief";
 import { generativeUiContent } from "./content/generative-ui";
 import { invoiceContent } from "./content/invoice";
+import { marketOverviewContent } from "./content/market-overview";
 
 export interface SkillMeta {
     name: string;
     description: string;
     content: string;
-    /** Should this be included in system prompt for every request? (for frequently used skills) */
     alwaysOn?: boolean;
 }
 
@@ -39,29 +40,41 @@ export const skillRegistry: Record<string, SkillMeta> = {
             "Present macroeconomic indicators (inflation, GDP, interest rates, unemployment) as a structured briefing report using live FRED data.",
         content: economicBriefContent,
     },
+
     "comps-analysis": {
         name: "comps-analysis",
         description:
-            "Compare a company against its peers using valuation multiples (EV/Revenue, EV/EBITDA, P/E) and operating metrics. Use for peer benchmarking, relative valuation, or finding undervalued/overvalued stocks.",
+            "Compare a company against its peers using valuation multiples (EV/Revenue, EV/EBITDA, P/E) and operating metrics from FMP. Use for peer benchmarking, relative valuation, or finding undervalued/overvalued stocks.",
         content: compsAnalysisContent,
     },
+
     "earnings-analysis": {
         name: "earnings-analysis",
         description:
-            "Analyze a company's most recent quarterly earnings — beat/miss assessment, key metrics, guidance changes, and stock reaction. Use when user asks about earnings, quarterly results, or post-earnings analysis.",
+            "Analyze a company's most recent quarterly earnings — beat/miss assessment, key metrics, guidance changes, and stock reaction using FMP and Tavily data.",
         content: earningsAnalysisContent,
     },
-
 
     "competitive-analysis": {
         name: "competitive-analysis",
         description:
-            "Analyze a company's competitive landscape — key competitors, market positioning, moat assessment (network effects, switching costs, scale, brand), and strategic threats. Use when user asks about competition, market share, or competitive advantages.",
+            "Analyze a company's competitive landscape — key competitors, market positioning, moat assessment (network effects, switching costs, scale, brand), and strategic threats using FMP financial data and Tavily market research.",
         content: competitiveAnalysisContent,
     },
 
+    "dcf-valuation": {
+        name: "dcf-valuation",
+        description:
+            "Build a DCF (Discounted Cash Flow) valuation model for a company using live FMP data. Calculates intrinsic value with sensitivity analysis and compares to market price. Use when user asks about fair value, intrinsic value, or whether a stock is overvalued/undervalued.",
+        content: dcfValuationContent,
+    },
 
-
+    "market-overview": {
+        name: "market-overview",
+        description:
+            "Provide a real-time market snapshot covering major stock indices (S&P 500, Nasdaq, Dow), top gainers/losers, Bitcoin, Ethereum, gold, forex, and today's key market narrative using FMP and Tavily.",
+        content: marketOverviewContent,
+    },
 
     invoice: {
         name: "invoice",
@@ -79,7 +92,6 @@ export const skillRegistry: Record<string, SkillMeta> = {
     },
 };
 
-/** Combines always-on skill content included in every request's system prompt */
 export function buildAlwaysOnPrompt(): string {
     return Object.values(skillRegistry)
         .filter((s) => s.alwaysOn)
@@ -87,7 +99,6 @@ export function buildAlwaysOnPrompt(): string {
         .join("\n\n");
 }
 
-/** Generates catalog of only lazy-loaded skills (excluding always-on) */
 export function buildSkillCatalog(): string {
     const lazySkills = Object.values(skillRegistry).filter((s) => !s.alwaysOn);
 

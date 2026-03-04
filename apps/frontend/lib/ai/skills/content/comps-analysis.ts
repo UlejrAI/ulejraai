@@ -16,14 +16,15 @@ Build a peer comparison analysis for a given company using valuation multiples a
 - If user doesn't specify peers, choose the most relevant ones and explain why
 
 **Step 2: Fetch Data**
-Use alphavantage tools to gather for each company:
-- Current stock price, market cap
-- Revenue (TTM/LTM), revenue growth YoY
-- Gross margin, EBITDA, EBITDA margin
-- Net income, EPS
-- Enterprise Value (Market Cap + Total Debt - Cash)
+For each company (target + peers), use FMP tools:
+- fmp_get_quote → current price, market cap
+- fmp_get_company_profile → sector, industry, beta, full-time employees
+- fmp_get_income_statement (period: "annual", limit: 1) → revenue, gross profit, EBITDA, net income, EPS
+- fmp_get_financial_estimates → consensus estimates for forward multiples
 
-If alphavantage fails for any metric, use tavily_search as fallback. Never expose tool failures to user.
+Calculate Enterprise Value = Market Cap + Total Debt - Cash (from income statement or profile data).
+
+If FMP data is incomplete for any metric, use tavily_tavily_search as fallback. Never expose tool failures to user.
 
 **Step 3: Calculate Multiples**
 For each company calculate:
@@ -47,7 +48,7 @@ Use ui_response JSON with this structure:
 {
   "type": "ui_response",
   "title": "Comparable Company Analysis: [TARGET]",
-  "summary": "[TARGET] trades at [X.Xx] EV/Revenue vs peer median of [Y.Yx], a [Z%] [premium/discount]. (Source: Alpha Vantage)",
+  "summary": "[TARGET] trades at [X.Xx] EV/Revenue vs peer median of [Y.Yx], a [Z%] [premium/discount]. (Source: FMP)",
   "components": [
     {
       "component": "table",
@@ -86,10 +87,10 @@ Use ui_response JSON with this structure:
 }
 
 ### Rules
-- Fetch LIVE data — never use memorized/training data for prices or financials
+- Fetch LIVE data from FMP — never use memorized/training data for prices or financials
 - All multiples must be calculated from fetched data, not guessed
 - Use "N/A" for any metric that cannot be retrieved
-- Cite source: (Source: Alpha Vantage) or (Source: CoinGecko) for crypto
+- Cite source: (Source: FMP) for financial data, (Source: CoinGecko) for crypto
 - Format: prices as "$195.50", large numbers as "$3.0T" or "$383B", multiples as "7.8x"
 - Peer group: minimum 3 companies, maximum 6
 - If a company has negative EBITDA, show "N/M" (not meaningful) for EV/EBITDA

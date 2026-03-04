@@ -46,13 +46,16 @@ const toolTypeLabels: Record<string, string> = {
   "tool-transferFunds": "Transfer Funds",
   "tool-exchangeAsset": "Exchange Asset",
   "tool-setBalance": "Set Balance",
+
   // AlphaVantage MCP (prefixed)
   "tool-alphavantage_TOOL_LIST": "AlphaVantage: List Tools",
   "tool-alphavantage_TOOL_GET": "AlphaVantage: Get Tool Info",
   "tool-alphavantage_TOOL_CALL": "AlphaVantage: Fetch Data",
+
   // CoinMarketCap MCP
   "tool-coinmarketcap_getLatestListings": "CoinMarketCap: Listings",
   "tool-coinmarketcap_getQuotes": "CoinMarketCap: Quotes",
+
   // CoinGecko MCP
   "tool-coingecko_get_simple_price": "CoinGecko: Price",
   "tool-coingecko_get_coins_markets": "CoinGecko: Markets",
@@ -65,18 +68,34 @@ const toolTypeLabels: Record<string, string> = {
   "tool-coingecko_get_id_coins": "CoinGecko: Coin Info",
   "tool-coingecko_get_id_exchanges": "CoinGecko: Exchange Info",
   "tool-coingecko_get_id_nfts": "CoinGecko: NFT Info",
+
   // Tavily MCP
   "tool-tavily_tavily_search": "Web Search",
   "tool-tavily_tavily_extract": "Web Extract",
   "tool-tavily_tavily_crawl": "Web Crawl",
   "tool-tavily_tavily_map": "Web Map",
   "tool-tavily_tavily_research": "Deep Research",
+  
   // FRED MCP
   "tool-fred_search_series": "FRED: Search Series",
   "tool-fred_get_series_info": "FRED: Series Info",
   "tool-fred_get_observations": "FRED: Economic Data",
   "tool-fred_get_releases": "FRED: Releases",
   "tool-fred_get_release_series": "FRED: Release Series",
+
+  // FMP MCP
+  "tool-fmp_get_quote": "FMP: Stock Quote",
+  "tool-fmp_get_company_profile": "FMP: Company Profile",
+  "tool-fmp_get_income_statement": "FMP: Income Statement",
+  "tool-fmp_calculate_dcf": "FMP: DCF Valuation",
+  "tool-fmp_get_ratings_snapshot": "FMP: Analyst Ratings",
+  "tool-fmp_get_biggest_gainers": "FMP: Biggest Gainers",
+  "tool-fmp_get_biggest_losers": "FMP: Biggest Losers",
+  "tool-fmp_get_most_active": "FMP: Most Active",
+  "tool-fmp_get_ema": "FMP: EMA Indicator",
+  "tool-fmp_get_crypto_quote": "FMP: Crypto Quote",
+  "tool-fmp_get_forex_quotes": "FMP: Forex Quote",
+  "tool-fmp_get_commodities_prices": "FMP: Commodities",
 };
 
 function formatToolLabel(toolType: string): string {
@@ -94,6 +113,7 @@ function formatToolLabel(toolType: string): string {
     coingecko: "CoinGecko",
     tavily: "Tavily",
     fred: "FRED",
+    fmp: "FMP",
   };
 
   for (const [prefix, label] of Object.entries(mcpPrefixes)) {

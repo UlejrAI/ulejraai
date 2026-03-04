@@ -11,7 +11,7 @@ Analyze a company's competitive landscape — market positioning, key competitor
 ### Workflow
 
 **Step 1: Identify the Company & Industry**
-- Confirm the target company and its primary industry/sector
+- Use fmp_get_company_profile for sector, industry, description, and market cap
 - Determine the key business segments if it's a diversified company
 - Identify which segment to focus on (or cover all if user asks broadly)
 
@@ -22,17 +22,16 @@ Group into 3 tiers:
 2. **Adjacent Competitors** (1-3): Overlapping but different core business
 3. **Emerging Threats** (1-2): Startups or companies expanding into the space
 
-Use tavily_search: "[Company] main competitors [year]"
-Use tavily_search: "[Industry] market share breakdown [year]"
+Use tavily_tavily_search: "[Company] main competitors [year]"
+Use tavily_tavily_search: "[Industry] market share breakdown [year]"
 
 **Step 3: Fetch Comparative Data**
-For each competitor, use alphavantage to gather:
-- Revenue, revenue growth YoY
-- Gross margin, operating margin
-- Market cap
-- Key segment revenue (if applicable)
+For each competitor, use FMP tools:
+- fmp_get_company_profile → sector, market cap, description
+- fmp_get_income_statement (period: "annual", limit: 2) → revenue, revenue growth YoY, gross margin, operating margin, EBITDA
+- fmp_get_quote → current price, market cap
 
-If alphavantage fails, use tavily_search as fallback.
+If FMP data is incomplete, use tavily_tavily_search as fallback.
 
 **Step 4: Moat Assessment**
 Evaluate the target company's durable advantages:
@@ -66,7 +65,7 @@ Use ui_response JSON with this structure:
 {
   "type": "ui_response",
   "title": "Competitive Landscape: [COMPANY]",
-  "summary": "[COMPANY] holds a [strong/moderate/weak] competitive position in [industry] with [key moat]. Primary threat is [competitor/trend]. (Sources: Alpha Vantage, Tavily Search)",
+  "summary": "[COMPANY] holds a [strong/moderate/weak] competitive position in [industry] with [key moat]. Primary threat is [competitor/trend]. (Sources: FMP, Tavily)",
   "components": [
     {
       "component": "table",
@@ -108,12 +107,12 @@ Use ui_response JSON with this structure:
 }
 
 ### Rules
-- ALWAYS search for current data — competitive landscapes shift rapidly
+- ALWAYS fetch live data from FMP and supplement with Tavily search
 - Minimum 3 competitors, maximum 6 (keep it focused)
 - Competitor types: always tag as "Direct", "Adjacent", or "Emerging"
 - Moat ratings must be justified with one specific reason, not generic
 - Avoid vague statements like "strong brand" — say WHY (e.g., "65% repurchase rate")
 - Risks must be specific: "[Competitor] is investing $2B in [area]" not "competition is increasing"
 - If market share data is unavailable, estimate from revenue ratios and flag as estimated
-- Cite sources: (Source: Alpha Vantage) for financials, (Source: Tavily) for market data/news
+- Cite sources: (Source: FMP) for financials, (Source: Tavily) for market data/news
 - Output ONLY valid JSON — no markdown wrapping`;

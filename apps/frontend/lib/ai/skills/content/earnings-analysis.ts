@@ -12,16 +12,19 @@ Analyze a company's most recent quarterly earnings results with beat/miss assess
 **Step 1: Fetch Latest Earnings Data**
 CRITICAL: Do NOT rely on training data. Always search for the latest results.
 
-1. Use tavily_search: "[Company] latest quarterly earnings results [current year]"
-2. Use tavily_search: "[Company] earnings call highlights [quarter] [year]"
-3. Use alphavantage to fetch: current price, EPS history, revenue history
-4. Verify the data is from the MOST RECENT quarter (not an old one)
+1. Use fmp_get_income_statement (symbol, period: "quarter", limit: 2) → latest and prior quarter actuals
+2. Use fmp_get_financial_estimates (symbol, period: "quarter") → consensus estimates
+3. Use fmp_get_quote → current price for post-earnings reaction
+4. Use fmp_get_company_profile → sector context
+5. Use tavily_tavily_search: "[Company] latest quarterly earnings results [current year]" → qualitative highlights
+6. Use tavily_tavily_search: "[Company] earnings call highlights [quarter] [year]" → management commentary
+7. Verify the data is from the MOST RECENT quarter (not an old one)
 
 **Step 2: Beat/Miss Analysis**
 For each key metric, determine:
-- **Actual vs Consensus**: Did the company beat or miss estimates?
+- **Actual vs Consensus**: Did the company beat or miss estimates? (from fmp_get_financial_estimates)
 - **Magnitude**: By how much? ("Revenue beat by $120M or 3%")
-- **Vs Prior Year**: YoY change for context
+- **Vs Prior Year**: YoY change for context (compare to prior year quarter from fmp_get_income_statement)
 
 Key metrics to assess:
 - Revenue (total and by segment if available)
@@ -39,7 +42,7 @@ Focus ONLY on what changed this quarter:
 - Any one-time items affecting results
 
 **Step 4: Stock Reaction**
-- Post-earnings price move (if available from search)
+- Post-earnings price move (from fmp_get_quote and tavily search)
 - Whether the market reaction aligns with the results
 
 ### Output Format
@@ -49,7 +52,7 @@ Use ui_response JSON with this structure:
 {
   "type": "ui_response",
   "title": "Earnings Update: [COMPANY] [QUARTER] [YEAR]",
-  "summary": "[COMPANY] [beat/missed] on revenue ($X.XB vs $X.XB est.) and [beat/missed] on EPS ($X.XX vs $X.XX est.). Stock [rose/fell] X% after-hours. (Sources: Alpha Vantage, Tavily Search)",
+  "summary": "[COMPANY] [beat/missed] on revenue ($X.XB vs $X.XB est.) and [beat/missed] on EPS ($X.XX vs $X.XX est.). Stock [rose/fell] X% after-hours. (Sources: FMP, Tavily)",
   "components": [
     {
       "component": "table",
@@ -91,13 +94,13 @@ Use ui_response JSON with this structure:
 }
 
 ### Rules
-- ALWAYS search for the latest earnings first — never use stale training data
+- ALWAYS fetch from FMP first, then supplement with Tavily search for qualitative data
 - Verify the quarter/year is the most recent available
-- If consensus estimates are unavailable, compare to prior quarter and prior year instead
+- If consensus estimates are unavailable from fmp_get_financial_estimates, search via Tavily
 - Beat/miss format: "Beat +X.X%" or "Miss -X.X%" with both absolute and percentage
 - YoY change: always include for context
 - Guidance: always mention if raised/maintained/lowered and vs consensus
 - If earnings haven't been reported yet, tell the user the expected date instead
-- Cite sources: (Source: Alpha Vantage) for financial data, (Source: Tavily) for news/estimates
+- Cite sources: (Source: FMP) for financial data, (Source: Tavily) for news/estimates
 - Format: "$94.8B" for revenue, "$2.18" for EPS, "46.3%" for margins, "+120bps" for basis points
 - Output ONLY valid JSON — no markdown wrapping`;
