@@ -6,3 +6,4 @@ apps/microservices/fred-mcp/.env
 apps/microservices/fmp-mcp/.env
 apps/microservices/fmp-mcp/venv/
 Project_status.txt
+output.txt

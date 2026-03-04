@@ -220,14 +220,24 @@ if __name__ == "__main__":
 
     if args.sse:
         import uvicorn
+        import inspect
 
         print(f"Starting FMP MCP Server (SSE) on http://{args.host}:{args.port}")
         print(f"API Key configured: {api_status}")
-        app = _make_health_app(mcp.sse_app(host_allowlist=["*"]))
+
+        sig = inspect.signature(mcp.sse_app)
+        if "host_allowlist" in sig.parameters:
+            app = _make_health_app(mcp.sse_app(host_allowlist=["*"]))
+        else:
+            app = _make_health_app(mcp.sse_app())
+
         uvicorn.run(app, host=args.host, port=args.port)
 
     elif args.streamable_http:
         import uvicorn
+        import inspect
+        from starlette.routing import Route
+        from starlette.responses import JSONResponse
 
         mode = ("stateless" if args.stateless else "stateful") + (
             " JSON" if args.json_response else " SSE"
@@ -238,20 +248,17 @@ if __name__ == "__main__":
         print(f"API Key configured: {api_status}")
         print(f"Endpoint: http://{args.host}:{args.port}/mcp/")
 
-        # Streamable HTTP needs proper lifespan - don't wrap, add health route directly
-        from starlette.routing import Route
-        from starlette.responses import JSONResponse
-
         async def health_check(request):
             return JSONResponse({"status": "healthy", "service": "fmp-mcp-server"})
 
-        app = mcp.streamable_http_app(
-             host_allowlist=["*"]
-        )
+        # Only pass host_allowlist if the method supports it
+        sig = inspect.signature(mcp.streamable_http_app)
+        if "host_allowlist" in sig.parameters:
+            app = mcp.streamable_http_app(host_allowlist=["*"])
+        else:
+            app = mcp.streamable_http_app()
 
-        health_route = Route("/health", health_check, methods=["GET"])
-        app.router.routes.insert(0, health_route)
-
+        app.router.routes.insert(0, Route("/health", health_check, methods=["GET"]))
         uvicorn.run(app, host=args.host, port=args.port)
 
     else:
