@@ -73,7 +73,6 @@ jobs:
                   while IFS= read -r path; do
                       [ -z "$path" ] && continue
                       if [[ "$path" == apps/frontend/* ]]; then
-                          # Frontend is a single monolithic app — track as one unit
                           frontend_changed=true
                       elif [[ "$path" == apps/microservices/* ]]; then
                           name="${path#apps/microservices/}"
@@ -98,9 +97,10 @@ jobs:
                       if [ -f "$app/Dockerfile" ] && [[ ! "$seen" == *"|$app|"* ]]; then
                           seen="$seen|$app|"
                           service_name="${app##*/}"
-                          # fred-mcp gets its own type so it can receive a dedicated secret
                           if [ "$service_name" = "fred-mcp" ]; then
                               svc_type="fred-mcp"
+                          elif [ "$service_name" = "fmp-mcp" ]; then
+                              svc_type="fmp-mcp"
                           else
                               svc_type="microservice"
                           fi
@@ -236,6 +236,22 @@ jobs:
                   secrets: |
                       FRED_API_KEY=FRED_API_KEY:latest
 
+            - id: "deploy-fmp-mcp"
+              name: "Deploy FMP MCP to Cloud Run"
+              if: matrix.type == 'fmp-mcp'
+              uses: "google-github-actions/deploy-cloudrun@33553064113a37d688aa6937bacbdc481580be17" # google-github-actions/deploy-cloudrun@v2
+              with:
+                  service: "${{ matrix.service_name }}"
+                  region: "${{ env.REGION }}"
+                  image: "${{ env.IMAGE_REPO }}/${{ matrix.service_name }}:${{ github.sha }}"
+                  flags: "--allow-unauthenticated"
+                  env_vars: |
+                      TRANSPORT=streamable-http
+                      STATELESS=true
+                      PORT=8000
+                  secrets: |
+                      FMP_API_KEY=FMP_API_KEY:latest
+
             - id: "deploy-openclaw-backend"
               name: "Deploy OpenClaw Backend to Cloud Run"
               if: matrix.type == 'openclaw-backend'
@@ -264,4 +280,4 @@ jobs:
 
             - name: "Show output"
               run: |
-                  echo "${{ steps.deploy-frontend.outputs.url || steps.deploy-microservice.outputs.url || steps.deploy-fred-mcp.outputs.url || steps.deploy-openclaw-backend.outputs.url || steps.deploy-openclaw-frontend.outputs.url }}"
+                  echo "${{ steps.deploy-frontend.outputs.url || steps.deploy-microservice.outputs.url || steps.deploy-fred-mcp.outputs.url || steps.deploy-fmp-mcp.outputs.url || steps.deploy-openclaw-backend.outputs.url || steps.deploy-openclaw-frontend.outputs.url }}"
