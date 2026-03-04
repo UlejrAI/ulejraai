@@ -15,7 +15,6 @@ RUN apk add --no-cache gcc musl-dev linux-headers && \
 
 # Copy application code
 COPY src/ ./src/
-COPY pyproject.toml ./
 COPY .env.template ./.env.template
 
 # Create an empty .env file
