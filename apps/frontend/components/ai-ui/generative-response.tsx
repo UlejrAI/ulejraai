@@ -22,21 +22,21 @@ interface CardItem {
   trend?: string;
 }
 
-interface UICardProps extends HTMLAttributes<HTMLDivElement> {
+export interface UICardProps extends HTMLAttributes<HTMLDivElement> {
   items: CardItem[];
 }
 
-interface UITableProps extends HTMLAttributes<HTMLDivElement> {
+export interface UITableProps extends HTMLAttributes<HTMLDivElement> {
   headers: string[];
   rows: string[][];
 }
 
-interface UIChartProps extends HTMLAttributes<HTMLDivElement> {
+export interface UIChartProps extends HTMLAttributes<HTMLDivElement> {
   type: "bar" | "line" | "pie";
   data: Array<{ label: string; value: number }>;
 }
 
-interface UIListProps extends HTMLAttributes<HTMLElement> {
+export interface UIListProps extends HTMLAttributes<HTMLElement> {
   items: string[];
   numbered?: boolean;
 }
