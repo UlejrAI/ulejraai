@@ -4,6 +4,7 @@ Financial Modeling Prep MCP Server
 Provides tools, resources, and prompts for interacting with
 the Financial Modeling Prep API via the Model Context Protocol.
 """
+
 import os
 import sys
 import argparse
@@ -24,11 +25,23 @@ def parse_args():
     default_port = int(os.environ.get("PORT", 8000))
     parser = argparse.ArgumentParser(description="Run the FMP MCP Server")
     parser.add_argument("--sse", action="store_true", help="Run as SSE server")
-    parser.add_argument("--streamable-http", action="store_true", help="Run as Streamable HTTP server")
-    parser.add_argument("--stateless", action="store_true", help="Stateless mode (Streamable HTTP)")
-    parser.add_argument("--json-response", action="store_true", help="JSON responses instead of SSE streams")
-    parser.add_argument("--port", type=int, default=default_port, help=f"Port (default: {default_port})")
-    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host (default: 0.0.0.0)")
+    parser.add_argument(
+        "--streamable-http", action="store_true", help="Run as Streamable HTTP server"
+    )
+    parser.add_argument(
+        "--stateless", action="store_true", help="Stateless mode (Streamable HTTP)"
+    )
+    parser.add_argument(
+        "--json-response",
+        action="store_true",
+        help="JSON responses instead of SSE streams",
+    )
+    parser.add_argument(
+        "--port", type=int, default=default_port, help=f"Port (default: {default_port})"
+    )
+    parser.add_argument(
+        "--host", type=str, default="0.0.0.0", help="Host (default: 0.0.0.0)"
+    )
     return parser.parse_args()
 
 
@@ -45,6 +58,7 @@ if args.sse and args.streamable_http:
 def create_mcp(name: str, **extra_kwargs):
     """Create FastMCP with only supported kwargs for the installed version."""
     import inspect
+
     sig = inspect.signature(FastMCP.__init__)
     valid_params = set(sig.parameters.keys()) - {"self"}
     filtered = {k: v for k, v in extra_kwargs.items() if k in valid_params}
@@ -72,34 +86,58 @@ from src.tools.search import search_by_symbol, search_by_name
 from src.tools.quote import get_quote, get_quote_change, get_aftermarket_quote
 from src.tools.charts import get_price_change
 from src.tools.analyst import (
-    get_ratings_snapshot, get_financial_estimates,
-    get_price_target_news, get_price_target_latest_news,
+    get_ratings_snapshot,
+    get_financial_estimates,
+    get_price_target_news,
+    get_price_target_latest_news,
 )
 from src.tools.calendar import get_company_dividends, get_dividends_calendar
 from src.tools.indices import get_index_list, get_index_quote
-from src.tools.market_performers import get_biggest_gainers, get_biggest_losers, get_most_active
+from src.tools.market_performers import (
+    get_biggest_gainers,
+    get_biggest_losers,
+    get_most_active,
+)
 from src.tools.market_hours import get_market_hours
-from src.tools.commodities import get_commodities_list, get_commodities_prices, get_historical_price_eod_light
+from src.tools.commodities import (
+    get_commodities_list,
+    get_commodities_prices,
+    get_historical_price_eod_light,
+)
 from src.tools.crypto import get_crypto_list, get_crypto_quote
 from src.tools.forex import get_forex_list, get_forex_quotes
 from src.tools.dcf_valuation import calculate_dcf
 from src.tools.technical_indicators import get_ema
 
 TOOLS = [
-    get_company_profile, get_company_notes,
-    get_quote, get_quote_change, get_aftermarket_quote,
+    get_company_profile,
+    get_company_notes,
+    get_quote,
+    get_quote_change,
+    get_aftermarket_quote,
     get_price_change,
     get_income_statement,
-    search_by_symbol, search_by_name,
-    get_ratings_snapshot, get_financial_estimates,
-    get_price_target_news, get_price_target_latest_news,
-    get_company_dividends, get_dividends_calendar,
-    get_index_list, get_index_quote,
-    get_biggest_gainers, get_biggest_losers, get_most_active,
+    search_by_symbol,
+    search_by_name,
+    get_ratings_snapshot,
+    get_financial_estimates,
+    get_price_target_news,
+    get_price_target_latest_news,
+    get_company_dividends,
+    get_dividends_calendar,
+    get_index_list,
+    get_index_quote,
+    get_biggest_gainers,
+    get_biggest_losers,
+    get_most_active,
     get_market_hours,
-    get_commodities_list, get_commodities_prices, get_historical_price_eod_light,
-    get_crypto_list, get_crypto_quote,
-    get_forex_list, get_forex_quotes,
+    get_commodities_list,
+    get_commodities_prices,
+    get_historical_price_eod_light,
+    get_crypto_list,
+    get_crypto_quote,
+    get_forex_list,
+    get_forex_quotes,
     calculate_dcf,
     get_ema,
     # TODO: fix and re-enable ETF tools
@@ -114,7 +152,9 @@ for tool_fn in TOOLS:
 # 4. Register resources (ONCE)
 # ---------------------------------------------------------------------------
 from src.resources.company import (
-    get_stock_info_resource, get_stock_peers_resource, get_price_targets_resource,
+    get_stock_info_resource,
+    get_stock_peers_resource,
+    get_price_targets_resource,
 )
 from src.resources.market import get_market_snapshot_resource
 
@@ -128,14 +168,22 @@ mcp.resource("price-targets://{symbol}")(get_price_targets_resource)
 # 5. Register prompts (ONCE)
 # ---------------------------------------------------------------------------
 from src.prompts.templates import (
-    company_analysis, financial_statement_analysis, stock_comparison,
-    market_outlook, investment_idea_generation, technical_analysis,
+    company_analysis,
+    financial_statement_analysis,
+    stock_comparison,
+    market_outlook,
+    investment_idea_generation,
+    technical_analysis,
     economic_indicator_analysis,
 )
 
 for prompt_fn in [
-    company_analysis, financial_statement_analysis, stock_comparison,
-    market_outlook, investment_idea_generation, technical_analysis,
+    company_analysis,
+    financial_statement_analysis,
+    stock_comparison,
+    market_outlook,
+    investment_idea_generation,
+    technical_analysis,
     economic_indicator_analysis,
 ]:
     mcp.prompt()(prompt_fn)
@@ -158,8 +206,11 @@ def _make_health_app(base_app):
             Route("/health", health_check, methods=["GET"]),
             Mount("/", app=base_app),
         ],
-        lifespan=base_app.router.lifespan_context if hasattr(base_app, 'router') else None,
+        lifespan=(
+            base_app.router.lifespan_context if hasattr(base_app, "router") else None
+        ),
     )
+
 
 # ---------------------------------------------------------------------------
 # 7. Run
@@ -169,15 +220,21 @@ if __name__ == "__main__":
 
     if args.sse:
         import uvicorn
+
         print(f"Starting FMP MCP Server (SSE) on http://{args.host}:{args.port}")
         print(f"API Key configured: {api_status}")
-        app = _make_health_app(mcp.sse_app())
+        app = _make_health_app(mcp.sse_app(host_allowlist=["*"]))
         uvicorn.run(app, host=args.host, port=args.port)
 
     elif args.streamable_http:
         import uvicorn
-        mode = ("stateless" if args.stateless else "stateful") + (" JSON" if args.json_response else " SSE")
-        print(f"Starting FMP MCP Server (Streamable HTTP {mode}) on http://{args.host}:{args.port}")
+
+        mode = ("stateless" if args.stateless else "stateful") + (
+            " JSON" if args.json_response else " SSE"
+        )
+        print(
+            f"Starting FMP MCP Server (Streamable HTTP {mode}) on http://{args.host}:{args.port}"
+        )
         print(f"API Key configured: {api_status}")
         print(f"Endpoint: http://{args.host}:{args.port}/mcp/")
 
@@ -188,7 +245,10 @@ if __name__ == "__main__":
         async def health_check(request):
             return JSONResponse({"status": "healthy", "service": "fmp-mcp-server"})
 
-        app = mcp.streamable_http_app()
+        app = mcp.streamable_http_app(
+             host_allowlist=["*"]
+        )
+
         health_route = Route("/health", health_check, methods=["GET"])
         app.router.routes.insert(0, health_route)
 
