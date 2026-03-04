@@ -36,7 +36,7 @@ interface UIChartProps extends HTMLAttributes<HTMLDivElement> {
   data: Array<{ label: string; value: number }>;
 }
 
-interface UIListProps extends HTMLAttributes<HTMLDivElement> {
+interface UIListProps extends HTMLAttributes<HTMLElement> {
   items: string[];
   numbered?: boolean;
 }
@@ -254,6 +254,7 @@ export function UIList({
   ...props
 }: UIListProps) {
   const ListTag = numbered ? "ol" : "ul";
+  const listProps = props as React.HTMLAttributes<HTMLElement>;
 
   return (
     <ListTag
@@ -263,7 +264,7 @@ export function UIList({
         "space-y-1",
         className
       )}
-      {...props}
+      {...listProps}
     >
       {items.map((item, index) => {
         const key = `item-${index}`;
