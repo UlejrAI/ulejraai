@@ -29,6 +29,10 @@ export const mcpServers = {
     envKey: "FRED_API_KEY",
     transportType: "streamable",
   },
+  fmp: {
+    url: process.env.FMP_MCP_URL || "http://localhost:8019/mcp",
+    transportType: "streamable",
+  },
 } as const satisfies Record<string, MCPServerConfig>;
 
 export type MCPServerName = keyof typeof mcpServers;
